@@ -3,9 +3,9 @@
 #include "numpy/npy_math.h"
 #include "stardist3d_impl.h"
 
-// dist.shape = (n_polys, n_rays)
+// dist.shape = (n_polys, n_params)
 // points.shape = (n_polys, 3)
-// verts.shape = (n_rays, 3)
+// verts.shape = (n_params, 3)
 // faces.shape = (n_faces, 3)
 // expects that polys are sorted with associated descending scores
 // returns boolean vector of polys indices that are kept
@@ -32,7 +32,7 @@ static PyObject* c_non_max_suppression_inds(PyObject *self, PyObject *args) {
 
 
   const int n_polys = PyArray_DIMS(arr_dist)[0];
-  const int n_rays = PyArray_DIMS(arr_dist)[1];
+  const int n_params = PyArray_DIMS(arr_dist)[1];
   const int n_faces = PyArray_DIMS(arr_faces)[0];
 
 
@@ -51,7 +51,7 @@ static PyObject* c_non_max_suppression_inds(PyObject *self, PyObject *args) {
 
 
   _COMMON_non_maximum_suppression_sparse(scores,dist, points,
-                                 n_polys, n_rays, n_faces, 
+                                 n_polys, n_params, n_faces, 
                                  verts, faces,
                                  threshold, use_bbox, verbose, 
                                  result);
@@ -64,9 +64,9 @@ static PyObject* c_non_max_suppression_inds(PyObject *self, PyObject *args) {
 
 //--------------------------------------------------------------
 
-// dist.shape = (n_polys, n_rays)
+// dist.shape = (n_polys, n_params)
 // points.shape = (n_polys, 3)
-// verts.shape = (n_rays, 3)
+// verts.shape = (n_params, 3)
 // faces.shape = (n_faces, 3)
 // labels.shape = (n_polys,)
 // shape = (3,)
@@ -104,7 +104,7 @@ static PyObject* c_polyhedron_to_label(PyObject *self, PyObject *args) {
 
 
   const int n_polys = PyArray_DIMS(arr_dist)[0];
-  const int n_rays = PyArray_DIMS(arr_dist)[1];
+  const int n_params = PyArray_DIMS(arr_dist)[1];
   const int n_faces = PyArray_DIMS(arr_faces)[0];
 
 
@@ -128,7 +128,7 @@ static PyObject* c_polyhedron_to_label(PyObject *self, PyObject *args) {
   
   _COMMON_polyhedron_to_label(dist, points,
                               verts,faces,
-                              n_polys, n_rays, n_faces,
+                              n_polys, n_params, n_faces,
                               labels, 
                               nz, ny,nx,
                               render_mode,
@@ -160,7 +160,7 @@ static PyObject* c_dist_to_volume(PyObject *self, PyObject *args) {
   const int nz = PyArray_DIMS(arr_dist)[0];
   const int ny = PyArray_DIMS(arr_dist)[1];
   const int nx = PyArray_DIMS(arr_dist)[2];
-  const int n_rays = PyArray_DIMS(arr_dist)[3];
+  const int n_params = PyArray_DIMS(arr_dist)[3];
   const int n_faces = PyArray_DIMS(arr_faces)[0];
 
 
@@ -182,7 +182,7 @@ static PyObject* c_dist_to_volume(PyObject *self, PyObject *args) {
 
   // ................................
 
-  _COMMON_dist_to_volume(dist, origin, verts, faces, n_rays, n_faces, nx, ny, nz, result);
+  _COMMON_dist_to_volume(dist, origin, verts, faces, n_params, n_faces, nx, ny, nz, result);
 
   // ................................
 
@@ -207,7 +207,7 @@ static PyObject* c_dist_to_centroid(PyObject *self, PyObject *args) {
   const int nz = PyArray_DIMS(arr_dist)[0];
   const int ny = PyArray_DIMS(arr_dist)[1];
   const int nx = PyArray_DIMS(arr_dist)[2];
-  const int n_rays = PyArray_DIMS(arr_dist)[3];
+  const int n_params = PyArray_DIMS(arr_dist)[3];
   const int n_faces = PyArray_DIMS(arr_faces)[0];
 
 
@@ -230,7 +230,7 @@ static PyObject* c_dist_to_centroid(PyObject *self, PyObject *args) {
   float * result = (float*) PyArray_DATA(arr_result);
 
 
-  _COMMON_dist_to_centroid(dist, origin, verts, faces, n_rays, n_faces, nx, ny, nz, absolute, result);
+  _COMMON_dist_to_centroid(dist, origin, verts, faces, n_params, n_faces, nx, ny, nz, absolute, result);
 
   return PyArray_Return(arr_result);
 }
@@ -251,11 +251,11 @@ static PyObject* c_star_dist3d(PyObject *self, PyObject *args) {
   PyArrayObject *pdz = NULL;
 
 
-  int n_rays;
+  int n_params;
   int grid_x, grid_y, grid_z;
 
 
-  if (!PyArg_ParseTuple(args, "O!O!O!O!iiii", &PyArray_Type, &src, &PyArray_Type, &pdz ,&PyArray_Type, &pdy,&PyArray_Type, &pdx, &n_rays,&grid_z,&grid_y,&grid_x))
+  if (!PyArg_ParseTuple(args, "O!O!O!O!iiii", &PyArray_Type, &src, &PyArray_Type, &pdz ,&PyArray_Type, &pdy,&PyArray_Type, &pdx, &n_params,&grid_z,&grid_y,&grid_x))
     return NULL;
 
   npy_intp *dims = PyArray_DIMS(src);
@@ -264,7 +264,7 @@ static PyObject* c_star_dist3d(PyObject *self, PyObject *args) {
   dims_dst[0] = dims[0]/grid_z;
   dims_dst[1] = dims[1]/grid_y;
   dims_dst[2] = dims[2]/grid_x;
-  dims_dst[3] = n_rays;
+  dims_dst[3] = n_params;
 
   dst = (PyArrayObject*)PyArray_SimpleNew(4,dims_dst,NPY_FLOAT32);
 
@@ -275,13 +275,13 @@ static PyObject* c_star_dist3d(PyObject *self, PyObject *args) {
         const unsigned short value = *(unsigned short *)PyArray_GETPTR3(src,i*grid_z,j*grid_y,k*grid_x);
         // background pixel
         if (value == 0) {
-          for (int n = 0; n < n_rays; n++) {
+          for (int n = 0; n < n_params; n++) {
             *(float *)PyArray_GETPTR4(dst,i,j,k,n) = 0;
           }
           // foreground pixel
         } else {
 
-          for (int n = 0; n < n_rays; n++) {
+          for (int n = 0; n < n_params; n++) {
 
             float dx = *(float *)PyArray_GETPTR1(pdx,n);
             float dy = *(float *)PyArray_GETPTR1(pdy,n);

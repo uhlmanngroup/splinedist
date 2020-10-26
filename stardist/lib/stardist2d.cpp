@@ -29,9 +29,9 @@ static PyObject* c_star_dist (PyObject *self, PyObject *args) {
 
   PyArrayObject *src = NULL;
   PyArrayObject *dst = NULL;
-  int n_rays;
+  int n_params;
 
-  if (!PyArg_ParseTuple(args, "O!i", &PyArray_Type, &src, &n_rays))
+  if (!PyArg_ParseTuple(args, "O!i", &PyArray_Type, &src, &n_params))
     return NULL;
 
   npy_intp *dims = PyArray_DIMS(src);
@@ -39,7 +39,7 @@ static PyObject* c_star_dist (PyObject *self, PyObject *args) {
   npy_intp dims_dst[3];
   dims_dst[0] = dims[0];
   dims_dst[1] = dims[1];
-  dims_dst[2] = n_rays;
+  dims_dst[2] = n_params;
 
   dst = (PyArrayObject*)PyArray_SimpleNew(3,dims_dst,NPY_FLOAT32);
 
@@ -49,13 +49,13 @@ static PyObject* c_star_dist (PyObject *self, PyObject *args) {
       const unsigned short value = *(unsigned short *)PyArray_GETPTR2(src,i,j);
       // background pixel
       if (value == 0) {
-        for (int k = 0; k < n_rays; k++) {
+        for (int k = 0; k < n_params; k++) {
           *(float *)PyArray_GETPTR3(dst,i,j,k) = 0;
         }
         // foreground pixel
       } else {
-        const float st_rays = (2*M_PI) / n_rays; // step size for ray angles
-        for (int k = 0; k < n_rays; k++) {
+        const float st_rays = (2*M_PI) / n_params; // step size for ray angles
+        for (int k = 0; k < n_params; k++) {
           const float phi = k*st_rays;
           const float dy = cos(phi);
           const float dx = sin(phi);
@@ -132,7 +132,7 @@ inline float poly_intersection_area(const ClipperLib::Path poly_a_path, const Cl
 
 
 
-// polys.shape = (n_polys, 2, n_rays)
+// polys.shape = (n_polys, 2, n_params)
 // expects that polys are sorted with associated descending scores
 // returns boolean vector of polys indices that are kept
 
@@ -151,7 +151,7 @@ static PyObject* c_non_max_suppression_inds (PyObject *self, PyObject *args) {
 
   npy_intp *dims = PyArray_DIMS(polys);
   const int n_polys = dims[0];
-  const int n_rays = dims[2];
+  const int n_params = dims[2];
 
   int * bbox_x1 = new int[n_polys];
   int * bbox_x2 = new int[n_polys];
@@ -176,7 +176,7 @@ static PyObject* c_non_max_suppression_inds (PyObject *self, PyObject *args) {
 
   if (verbose){
     printf("Non Maximum Suppression (2D) ++++ \n");
-    printf("NMS: n_polys  = %d \nNMS: n_rays   = %d  \nNMS: thresh   = %.3f \nNMS: max_bbox_search = %d \n", n_polys, n_rays, threshold, max_bbox_search);
+    printf("NMS: n_polys  = %d \nNMS: n_params   = %d  \nNMS: thresh   = %.3f \nNMS: max_bbox_search = %d \n", n_polys, n_params, threshold, max_bbox_search);
 #ifdef _OPENMP
     printf("NMS: using OpenMP with %d thread(s)\n", omp_get_max_threads());
 #endif
@@ -189,7 +189,7 @@ static PyObject* c_non_max_suppression_inds (PyObject *self, PyObject *args) {
   for (int i=0; i<n_polys; i++) {
     ClipperLib::Path clip;
     // build clip poly and bounding boxes
-    for (int k =0; k<n_rays; k++) {
+    for (int k =0; k<n_params; k++) {
       int y = *(int *)PyArray_GETPTR3(polys,i,0,k);
       int x = *(int *)PyArray_GETPTR3(polys,i,1,k);
       if (k==0) {

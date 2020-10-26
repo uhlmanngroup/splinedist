@@ -16,10 +16,10 @@ from skimage import measure
 from scipy.interpolate import interp1d
 import cv2
 
-def spline_dist(a, n_rays=32, mode='cpp'):
+def spline_dist(a, n_params=32, mode='cpp'):
     """'a' assumbed to be a label image with integer values that encode object ids. id 0 denotes background."""
 
-    n_rays >= 3 or _raise(ValueError("need 'n_rays' >= 3"))
+    n_params >= 3 or _raise(ValueError("need 'n_params' >= 3"))
     
     contour_points = 400
     dist = np.zeros((a.shape[0],a.shape[1],contour_points,2))
@@ -49,12 +49,12 @@ def dist_to_coord(rhos, grid=(1,1)):
     
     rhos = np.reshape(rhos,(rhos.shape[0], rhos.shape[1], rhos.shape[2], -1, 2))
    
-    n_images,h,w,n_rays,_ = rhos.shape
-    coord = np.empty((n_images,h,w,2,n_rays),dtype=rhos.dtype)
+    n_images,h,w,n_params,_ = rhos.shape
+    coord = np.empty((n_images,h,w,2,n_params),dtype=rhos.dtype)
 
     start = np.indices((h,w))
     for i in range(2):
-        coord[...,i,:] = grid[i] * np.broadcast_to(start[i].reshape(1,h,w,1), (n_images,h,w,n_rays))
+        coord[...,i,:] = grid[i] * np.broadcast_to(start[i].reshape(1,h,w,1), (n_images,h,w,n_params))
 
     #phis = 2 * math.pi * expit(rhos[:,:,:,:,1])    
     phis = rhos[:,:,:,:,1]            
@@ -94,15 +94,15 @@ def polygons_to_label(coord, prob, points, shape=None, thr=-np.inf):
         i += 1
     return lbl
 
-def ray_angles(n_rays=32):
-    return np.linspace(0,2*np.pi,n_rays,endpoint=False)
+def ray_angles(n_params=32):
+    return np.linspace(0,2*np.pi,n_params,endpoint=False)
 
-def relabel_image_splinedist(lbl, n_rays, **kwargs):
+def relabel_image_splinedist(lbl, n_params, **kwargs):
     """relabel each label region in `lbl` with its spline representation"""
     _check_label_array(lbl, "lbl")
     if not lbl.ndim==2:
         raise ValueError("lbl image should be 2 dimensional")
-    dist = spline_dist(lbl, n_rays, **kwargs)
+    dist = spline_dist(lbl, n_params, **kwargs)
     coord = dist_to_coord(dist)    
     points = np.array(tuple(np.array(r.centroid).astype(int) for r in regionprops(lbl)))    
     return polygons_to_label(coord, np.ones_like(lbl), points, shape=lbl.shape)

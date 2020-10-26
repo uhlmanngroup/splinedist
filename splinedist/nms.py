@@ -11,7 +11,7 @@ def non_maximum_suppression(coord, prob, grid=(1,1), b=2, nms_thresh=0.5, prob_t
     """2D coordinates of the polys that survive from a given prediction (prob, coord)
 
     prob.shape = (Ny,Nx)
-    coord.shape = (Ny,Nx,2,n_rays)
+    coord.shape = (Ny,Nx,2,n_params)
 
     b: don't use pixel closer than b pixels to the image boundary
     """
@@ -77,7 +77,7 @@ def non_maximum_suppression_3d(dist, prob, rays, grid=(1,1,1), b=2, nms_thresh=0
     
     Retains only polyhedra whose overlap is smaller than nms_thresh 
 
-    dist.shape = (Nz,Ny,Nx, n_rays)
+    dist.shape = (Nz,Ny,Nx, n_params)
     prob.shape = (Nz,Ny,Nx)
 
     """
@@ -119,7 +119,7 @@ def non_maximum_suppression_3d_sparse(dist, prob, points, rays, b=2, nms_thresh=
     """Non-Maximum-Supression of 3D polyhedra from a list of dists, probs and points
     
     Retains only polyhedra whose overlap is smaller than nms_thresh 
-    dist.shape = (n_polys, n_rays)
+    dist.shape = (n_polys, n_params)
     prob.shape = (n_polys,)
     points.shape = (n_polys,3)
     """
@@ -159,7 +159,7 @@ def non_maximum_suppression_3d_inds(dist, points, rays, scores, thresh=0.5, use_
 
     i.e. the smaller thresh, the more polygons will be supressed
 
-    dist.shape = (n_poly, n_rays)
+    dist.shape = (n_poly, n_params)
     point.shape = (n_poly, 3)
     score.shape = (n_poly,)
 

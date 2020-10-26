@@ -127,7 +127,7 @@ inline unsigned char inside_polyhedron(const float z,const float y,const float x
 									   const float * center,
 									   const float * polyverts,
 									   const int * const faces,
-									   const int n_rays, const int n_faces){
+									   const int n_params, const int n_faces){
 
 
   for (int i  = 0; i < n_faces; ++i) {
@@ -171,7 +171,7 @@ inline unsigned char inside_polyhedron_kernel(const float z,
 											  const float * center,
 											  const float * polyverts,
 											  const int * const faces,
-											  const int n_rays,
+											  const int n_params,
 											  const int n_faces){
 
 
@@ -230,7 +230,7 @@ inline float tetrahedron_volume(float Rz, float Ry, float Rx,
 inline float polyhedron_volume(const float * const dist,
                                const float * const verts,
                                const int * const faces,
-                               const int n_rays, const int n_faces){
+                               const int n_params, const int n_faces){
 
 
   float vol = 0.f;
@@ -266,7 +266,7 @@ inline float polyhedron_volume(const float * const dist,
 inline void polyhedron_centroid(const float * const dist,
 								const float * const verts,
 								const int * const faces,
-								const int n_rays, const int n_faces,
+								const int n_params, const int n_faces,
 								float * centroid){
 
 
@@ -313,10 +313,10 @@ inline void polyhedron_centroid(const float * const dist,
 }
 
 
-inline float bounding_radius_outer(const float * const dist, const int n_rays){
+inline float bounding_radius_outer(const float * const dist, const int n_params){
 
   float r = 0;
-  for (int i=0; i<n_rays; i++)
+  for (int i=0; i<n_params; i++)
 	r = fmax(r,dist[i]);
 
   return r;
@@ -325,7 +325,7 @@ inline float bounding_radius_outer(const float * const dist, const int n_rays){
 inline float bounding_radius_inner(const float * const dist,
                                    const float * const verts,
                                    const int * const faces,
-                                   const int n_rays, const int n_faces){
+                                   const int n_params, const int n_faces){
 
   float r = INFINITY;
 
@@ -373,11 +373,11 @@ inline float bounding_radius_inner(const float * const dist,
 // computes the outer radius in "isotropic" coordinates
 inline float bounding_radius_outer_isotropic(const float * const dist,
 											 const float * const verts,
-											 const int n_rays,
+											 const int n_params,
 											 const float * aniso){
 
   float r_squared_max = 0;
-  for (int i=0; i<n_rays; i++){
+  for (int i=0; i<n_params; i++){
 	float z = aniso[0]*dist[i]*verts[3*i];
 	float y = aniso[1]*dist[i]*verts[3*i+1];
 	float x = aniso[2]*dist[i]*verts[3*i+2];
@@ -393,7 +393,7 @@ inline float bounding_radius_outer_isotropic(const float * const dist,
 inline float bounding_radius_inner_isotropic(const float * const dist,
 											 const float * const verts,
 											 const int * const faces,
-											 const int n_rays,
+											 const int n_params,
 											 const int n_faces,
 											 const float * aniso){
 
@@ -509,14 +509,14 @@ inline float intersect_bbox(const int * box1, const int* box2){
 inline void polyhedron_bbox(const float * const dist,
 							const float * const center,
 							const float * const verts,
-							const int n_rays, int * bbox){
+							const int n_params, int * bbox){
 
   int z1 = std::numeric_limits<int>::max(),z2 = -1;
   int y1 = std::numeric_limits<int>::max(),y2 = -1;
   int x1 = std::numeric_limits<int>::max(),x2 = -1;
 
 
-  for (int j = 0; j < n_rays; ++j) {
+  for (int j = 0; j < n_params; ++j) {
     float z = center[0] + dist[j]*verts[3*j];
     float y = center[1] + dist[j]*verts[3*j+1];
     float x = center[2] + dist[j]*verts[3*j+2];
@@ -543,10 +543,10 @@ inline void polyhedron_bbox(const float * const dist,
 inline void polyhedron_polyverts(const float * const dist,
                                  const float * const center,
                                  const float * const verts,
-                                 const int n_rays, float * polyverts){
+                                 const int n_params, float * polyverts){
 
 
-  for (int j = 0; j < n_rays; ++j) {
+  for (int j = 0; j < n_params; ++j) {
 	float z = center[0] + dist[j]*verts[3*j];
 	float y = center[1] + dist[j]*verts[3*j+1];
 	float x = center[2] + dist[j]*verts[3*j+2];
@@ -559,7 +559,7 @@ inline void polyhedron_polyverts(const float * const dist,
 
 void render_polyhedron(const float * const dist, const float * const center,
 					   const int * const bbox, const float * const polyverts,
-					   const int * const faces, const int n_rays, const int n_faces,
+					   const int * const faces, const int n_params, const int n_faces,
 					   bool * rendered, const int Nz, const int Ny, const int Nx){
 
   // printf("rendering polygon of bbox size %d %d %d \n",Nz,Ny,Nx);
@@ -571,7 +571,7 @@ void render_polyhedron(const float * const dist, const float * const center,
 
 		rendered[x+y*Nx+z*Nx*Ny] = inside_polyhedron(z+bbox[0], y+bbox[2],x+bbox[4],
 													 center, polyverts,
-													 faces, n_rays, n_faces);
+													 faces, n_params, n_faces);
 	  }
 	}
   }
@@ -580,7 +580,7 @@ void render_polyhedron(const float * const dist, const float * const center,
 
 int overlap_render_polyhedron(const float * const dist, const float * const center,
                               const int * const bbox, const float * const polyverts,
-                              const int * const faces, const int n_rays,
+                              const int * const faces, const int n_params,
                               const int n_faces, const bool * const rendered,
                               const int Nz, const int Ny, const int Nx,
                               const float overlap_maximal){
@@ -597,7 +597,7 @@ int overlap_render_polyhedron(const float * const dist, const float * const cent
 		const int py = y+bbox[2];
 		const int px = x+bbox[4];
 
-		res += ((rendered[x+y*Nx+z*Nx*Ny]) && (inside_polyhedron(pz, py, px ,center, polyverts, faces, n_rays, n_faces)));
+		res += ((rendered[x+y*Nx+z*Nx*Ny]) && (inside_polyhedron(pz, py, px ,center, polyverts, faces, n_params, n_faces)));
 
         if (res>overlap_maximal){
           return res;
@@ -612,7 +612,7 @@ int overlap_render_polyhedron_kernel(const float * const dist,
                                      const float * const center,
                                      const int * const bbox,
                                      const float * const polyverts,
-                                     const int * const faces, const int n_rays,
+                                     const int * const faces, const int n_params,
                                      const int n_faces,
                                      const bool * const rendered,
                                      const int Nz, const int Ny, const int Nx){
@@ -635,10 +635,10 @@ int overlap_render_polyhedron_kernel(const float * const dist,
 		const int py = y+bbox[2];
 		const int px = x+bbox[4];
 
-		// if ((inside_polyhedron_kernel(pz, py, px, center, polyverts, faces, n_rays, n_faces)) && !(inside_polyhedron(pz, py, px, center, polyverts, faces, n_rays, n_faces)))
+		// if ((inside_polyhedron_kernel(pz, py, px, center, polyverts, faces, n_params, n_faces)) && !(inside_polyhedron(pz, py, px, center, polyverts, faces, n_params, n_faces)))
 		//   printf("YIKKKKKKKES   %.1f ,%.1f ,%.1f, %d ,%d ,%d\n", center[0], center[1], center[2], pz, py, px);
 
-		res += ((rendered[x+y*Nx+z*Nx*Ny]) && (inside_polyhedron_kernel(pz, py, px, center, polyverts, faces, n_rays, n_faces)));
+		res += ((rendered[x+y*Nx+z*Nx*Ny]) && (inside_polyhedron_kernel(pz, py, px, center, polyverts, faces, n_params, n_faces)));
 
 
 	  }
@@ -739,15 +739,15 @@ inline std::array<double,DIM+1> build_halfspace(const float * const A,
 // create the halfspaces of the convex hull of a polyhedron
 inline std::vector<std::array<double,DIM+1>>
 halfspaces_convex(const float * const polyverts,
-				  const int n_rays){
+				  const int n_params){
 
   // copy vertices to double type;
-  std::vector<double> points(DIM*n_rays);
-  for (int i = 0; i < DIM*n_rays; ++i)
+  std::vector<double> points(DIM*n_params);
+  for (int i = 0; i < DIM*n_params; ++i)
 	points[i] = polyverts[i];
 
   // get convex hull
-  Qhull qvert("convex hull", DIM, n_rays, points.data(), "");
+  Qhull qvert("convex hull", DIM, n_params, points.data(), "");
 
   //get halfspaces
   std::vector<std::array<double,DIM+1>> halfspaces;
@@ -804,7 +804,7 @@ inline float qhull_overlap_kernel(
 						 const float * const polyverts1, const float * const center1,
 						 const float * const polyverts2, const float * const center2,
                          const int * const faces,
-                         const int n_rays,
+                         const int n_params,
                          const int n_faces, const int n_step=1){
 
   // build halfspaces
@@ -845,14 +845,14 @@ inline float qhull_overlap_kernel(
 inline float qhull_overlap_convex_hulls(
                                         const float * const polyverts1, const float * const center1,
                                         const float * const polyverts2, const float * const center2,
-                                        const int * const faces, const int n_rays, const int n_faces){
+                                        const int * const faces, const int n_params, const int n_faces){
 
 
   try{
 	// copy polyverts to double array
-	std::vector<std::array<double,DIM>> verts1(n_rays), verts2(n_rays);
+	std::vector<std::array<double,DIM>> verts1(n_params), verts2(n_params);
 
-	for (int i = 0; i < n_rays; ++i) {
+	for (int i = 0; i < n_params; ++i) {
 	  for (int j = 0; j < DIM; ++j) {
 		verts1[i][j] = polyverts1[DIM*i+j];
 		verts2[i][j] = polyverts2[DIM*i+j];
@@ -864,8 +864,8 @@ inline float qhull_overlap_convex_hulls(
 	double pcenter2[] = {center2[0], center2[1], center2[2]};
     
 	// build convex hulls of the polygon
-	Qhull qvert1("convex hull", DIM, n_rays, (double *)&verts1[0], "");
-	Qhull qvert2("convex hull", DIM, n_rays, (double *)&verts2[0], "");
+	Qhull qvert1("convex hull", DIM, n_params, (double *)&verts1[0], "");
+	Qhull qvert2("convex hull", DIM, n_params, (double *)&verts2[0], "");
 
 	// build halfspaces from them
 
@@ -919,16 +919,16 @@ float diff_time(const std::chrono::time_point<std::chrono::high_resolution_clock
 }
 
 
-// dist.shape = (n_polys, n_rays)
+// dist.shape = (n_polys, n_params)
 // points.shape = (n_polys, 3)
-// verts.shape = (n_rays, 3)
+// verts.shape = (n_params, 3)
 // faces.shape = (n_faces, 3)
 // expects that polys are sorted with associated descending scores
 // returns boolean vector of polys indices that are kept
 
 void _COMMON_non_maximum_suppression_sparse(
                     const float* scores, const float* dist, const float* points,
-                    const int n_polys, const int n_rays, const int n_faces, 
+                    const int n_polys, const int n_params, const int n_faces, 
                     const float* verts, const int* faces,
                     const float threshold, const int use_bbox, const int verbose, 
                     bool* result)
@@ -938,7 +938,7 @@ void _COMMON_non_maximum_suppression_sparse(
   
   if (verbose){
     printf("Non Maximum Suppression (3D) ++++ \n");
-    printf("NMS: n_polys  = %d \nNMS: n_rays   = %d  \nNMS: n_faces  = %d \nNMS: thresh   = %.3f \nNMS: use_bbox = %d \n", n_polys, n_rays, n_faces, threshold, use_bbox);
+    printf("NMS: n_polys  = %d \nNMS: n_params   = %d  \nNMS: n_faces  = %d \nNMS: thresh   = %.3f \nNMS: use_bbox = %d \n", n_polys, n_params, n_faces, threshold, use_bbox);
 #ifdef _OPENMP
     printf("NMS: using OpenMP with %d thread(s)\n", omp_get_max_threads());
 #endif
@@ -967,14 +967,14 @@ void _COMMON_non_maximum_suppression_sparse(
 #pragma omp parallel for
   for (int i=0; i<n_polys; i++) {
 
-    const float * const curr_dist = &dist[i*n_rays];
+    const float * const curr_dist = &dist[i*n_params];
     const float * const curr_point = &points[3*i];
     int * curr_bbox = &bbox[6*i];
 
-    volumes[i] = polyhedron_volume(curr_dist, verts, faces, n_rays, n_faces);
+    volumes[i] = polyhedron_volume(curr_dist, verts, faces, n_params, n_faces);
 
     // bounding boxes
-    polyhedron_bbox(curr_dist, curr_point, verts, n_rays, curr_bbox);
+    polyhedron_bbox(curr_dist, curr_point, verts, n_params, curr_bbox);
 
     // running average of bbox anisotropies
     anisotropy[0] += (float)(curr_bbox[1]-curr_bbox[0])/n_polys;
@@ -1004,18 +1004,18 @@ void _COMMON_non_maximum_suppression_sparse(
 #pragma omp parallel for
   for (int i=0; i<n_polys; i++) {
 
-    const float * const curr_dist = &dist[i*n_rays];
+    const float * const curr_dist = &dist[i*n_params];
 
     // outer and inner bounding radius
-    radius_outer[i] = bounding_radius_outer(curr_dist, n_rays);
-    radius_inner[i] = bounding_radius_inner(curr_dist, verts, faces, n_rays, n_faces);
+    radius_outer[i] = bounding_radius_outer(curr_dist, n_params);
+    radius_inner[i] = bounding_radius_inner(curr_dist, verts, faces, n_params, n_faces);
 
     // outer and inner isotropic bounding radius
     radius_outer_isotropic[i] = bounding_radius_outer_isotropic(curr_dist, verts,
-                                                                n_rays,anisotropy);
+                                                                n_params,anisotropy);
 
     radius_inner_isotropic[i] = bounding_radius_inner_isotropic(curr_dist, verts,
-                                                                faces, n_rays,
+                                                                faces, n_params,
                                                                 n_faces, anisotropy);
 
     // printf("r    : %.2f \t %.2f \n",radius_inner[i], radius_outer[i]);
@@ -1052,7 +1052,7 @@ void _COMMON_non_maximum_suppression_sparse(
     suppressed[i] = false;
   }
 
-  float * curr_polyverts = new float[3*n_rays];
+  float * curr_polyverts = new float[3*n_params];
 
   ProgressBar prog("suppressed");
   
@@ -1090,7 +1090,7 @@ void _COMMON_non_maximum_suppression_sparse(
 
     // the size of the bbox region of interest
 
-    const float * const curr_dist  = &dist[i*n_rays];
+    const float * const curr_dist  = &dist[i*n_params];
     const float * const curr_point = &points[3*i];
     const int *   const curr_bbox  = &bbox[6*i];
 
@@ -1101,7 +1101,7 @@ void _COMMON_non_maximum_suppression_sparse(
     int Nx = curr_bbox[5]-curr_bbox[4]+1;
 
     // compute polyverts
-    polyhedron_polyverts(curr_dist, curr_point, verts, n_rays, curr_polyverts);
+    polyhedron_polyverts(curr_dist, curr_point, verts, n_params, curr_polyverts);
      
 	 //  inner loop
 	 //  can be parallelized....
@@ -1168,11 +1168,11 @@ void _COMMON_non_maximum_suppression_sparse(
         continue;
       }
 
-      float * polyverts = new float[3*n_rays];
+      float * polyverts = new float[3*n_params];
 
       // compute polyverts of the second polyhedron
-      polyhedron_polyverts(&dist[j*n_rays], &points[3*j],
-                           verts,n_rays, polyverts);
+      polyhedron_polyverts(&dist[j*n_params], &points[3*j],
+                           verts,n_params, polyverts);
 
 
       // ------- second check: kernel intersection (lower bound)
@@ -1182,7 +1182,7 @@ void _COMMON_non_maximum_suppression_sparse(
       float A_inter_kernel = qhull_overlap_kernel(
 	   								  curr_polyverts, curr_point,
 	   								  polyverts, &points[3*j],
-	   								  faces, n_rays, n_faces);
+	   								  faces, n_params, n_faces);
 
       count_call_kernel++;
       timer_call_kernel += diff_time(time_start);
@@ -1203,7 +1203,7 @@ void _COMMON_non_maximum_suppression_sparse(
       float A_inter_convex = qhull_overlap_convex_hulls(
 	   								  curr_polyverts, curr_point,
 	   								  polyverts, &points[3*j],
-	   								  faces, n_rays, n_faces);
+	   								  faces, n_params, n_faces);
       count_call_convex++;
       timer_call_convex += diff_time(time_start);
 
@@ -1228,16 +1228,16 @@ void _COMMON_non_maximum_suppression_sparse(
         {
           curr_rendered = new bool[Nz*Ny*Nx];
           render_polyhedron(curr_dist, curr_point, curr_bbox, curr_polyverts,
-                            faces, n_rays, n_faces,  curr_rendered, Nz, Ny, Nx);
+                            faces, n_params, n_faces,  curr_rendered, Nz, Ny, Nx);
            
         }
       }
        
-      float A_inter_render = overlap_render_polyhedron(&dist[j*n_rays],
+      float A_inter_render = overlap_render_polyhedron(&dist[j*n_params],
                                                        &points[3*j],
                                                        curr_bbox,
                                                        polyverts,
-                                                       faces, n_rays, n_faces,
+                                                       faces, n_params, n_faces,
                                                        curr_rendered, Nz, Ny, Nx,
                                                        (A_min+1e-10)*threshold
                                                        );
@@ -1308,9 +1308,9 @@ void _COMMON_non_maximum_suppression_sparse(
 
 //--------------------------------------------------------------
 
-// dist.shape = (n_polys, n_rays)
+// dist.shape = (n_polys, n_params)
 // points.shape = (n_polys, 3)
-// verts.shape = (n_rays, 3)
+// verts.shape = (n_params, 3)
 // faces.shape = (n_faces, 3)
 // labels.shape = (n_polys,)
 // shape = (3,)
@@ -1324,7 +1324,7 @@ void _COMMON_non_maximum_suppression_sparse(
 
 void  _COMMON_polyhedron_to_label(const float* dist, const float* points,
                                   const float* verts,const int* faces,
-                                  const int n_polys, const int n_rays,
+                                  const int n_polys, const int n_params,
                                   const int n_faces,
                                   const int * labels, 
                                   const int nz, const int  ny,const int nx,
@@ -1341,7 +1341,7 @@ void  _COMMON_polyhedron_to_label(const float* dist, const float* points,
   if (verbose>=1){
     printf("+++++++++++++++ polyhedra to label +++++++++++++++ \n");
     printf("n_polys           = %d \n", n_polys);
-    printf("n_rays            = %d \n", n_rays);
+    printf("n_params            = %d \n", n_params);
     printf("n_faces           = %d \n", n_faces);
     printf("nz, ny, nx        = %d %d %d \n", nz,ny,nx);
     printf("use_overlap_label = %d \n", use_overlap_label);
@@ -1349,7 +1349,7 @@ void  _COMMON_polyhedron_to_label(const float* dist, const float* points,
     fflush(stdout);
   }
 
-  float * polyverts = new float[3*n_rays];
+  float * polyverts = new float[3*n_params];
   int bbox[6];
 
 
@@ -1362,18 +1362,18 @@ void  _COMMON_polyhedron_to_label(const float* dist, const float* points,
       return;
     }
     
-    const float * const curr_dist = &dist[i*n_rays];
+    const float * const curr_dist = &dist[i*n_params];
     const float * const curr_center = &points[i*3];
 
     // calculate the actual vertices and the bounding box
-    polyhedron_bbox(curr_dist, curr_center, verts, n_rays, bbox);
-    polyhedron_polyverts(curr_dist, curr_center, verts, n_rays, polyverts);
+    polyhedron_bbox(curr_dist, curr_center, verts, n_params, bbox);
+    polyhedron_polyverts(curr_dist, curr_center, verts, n_params, polyverts);
 
     // get halfspaces of convex hull and of kernel
     std::vector<std::array<double,DIM+1>> hs_convex;
     std::vector<std::array<double,DIM+1>> hs_kernel;
 
-    hs_convex = halfspaces_convex(polyverts, n_rays);
+    hs_convex = halfspaces_convex(polyverts, n_params);
     hs_kernel = halfspaces_kernel(polyverts, faces, n_faces);
 
 
@@ -1396,7 +1396,7 @@ void  _COMMON_polyhedron_to_label(const float* dist, const float* points,
             inside = (
                       point_in_halfspaces(z,y,x,hs_kernel) ||
                       (point_in_halfspaces(z,y,x,hs_convex) &&
-                       inside_polyhedron(z,y,x, curr_center, polyverts, faces, n_rays, n_faces)));
+                       inside_polyhedron(z,y,x, curr_center, polyverts, faces, n_params, n_faces)));
 
             break;
           case 1:
@@ -1417,10 +1417,10 @@ void  _COMMON_polyhedron_to_label(const float* dist, const float* points,
             bool error = false;
             if ((inside_polyhedron_kernel(z,y,x,
                                           curr_center, polyverts,
-                                          faces, n_rays, n_faces)) &&
+                                          faces, n_params, n_faces)) &&
                 !(inside_polyhedron(z,y,x,
                                     curr_center, polyverts,
-                                    faces, n_rays, n_faces)))
+                                    faces, n_params, n_faces)))
               error = true;
 
             if (error){
@@ -1450,7 +1450,7 @@ void  _COMMON_polyhedron_to_label(const float* dist, const float* points,
 
 void _COMMON_dist_to_volume(const float * dist, const float * origin,
                             const float * verts, const int * faces,
-                            const int n_rays, const int n_faces,
+                            const int n_params, const int n_faces,
                             const int nx, const int ny,const int nz,
                             float *result){
   
@@ -1459,14 +1459,14 @@ void _COMMON_dist_to_volume(const float * dist, const float * origin,
 	for (int j = 0; j < ny; ++j) {
 	  for (int i = 0; i < nx; ++i) {
 
-		float * polyverts = new float[3*n_rays];
+		float * polyverts = new float[3*n_params];
 
-		const int ind = n_rays*(i+nx*(j+k*ny));
+		const int ind = n_params*(i+nx*(j+k*ny));
 
 		const float * curr_dist = &dist[ind];
-		polyhedron_polyverts(curr_dist, origin, verts, n_rays, polyverts);
+		polyhedron_polyverts(curr_dist, origin, verts, n_params, polyverts);
 
-		const float vol = polyhedron_volume(&dist[ind], verts, faces, n_rays, n_faces);
+		const float vol = polyhedron_volume(&dist[ind], verts, faces, n_params, n_faces);
 
 		result[i+nx*(j+k*ny)] = vol;
 
@@ -1479,7 +1479,7 @@ void _COMMON_dist_to_volume(const float * dist, const float * origin,
 
 void _COMMON_dist_to_centroid(const float * dist, const float * origin,
                               const float * verts, const int * faces,
-                              const int n_rays, const int n_faces,
+                              const int n_params, const int n_faces,
                               const int nx, const int ny,const int nz,
                               const int absolute, 
                               float *result){
@@ -1488,15 +1488,15 @@ void _COMMON_dist_to_centroid(const float * dist, const float * origin,
   for (int k = 0; k < nz; ++k) {
 	for (int j = 0; j < ny; ++j) {
 	  for (int i = 0; i < nx; ++i) {
-		const int ind = n_rays*(i+nx*(j+k*ny));
+		const int ind = n_params*(i+nx*(j+k*ny));
 
 		const float * curr_dist = &dist[ind];
-		float * polyverts = new float[3*n_rays];
+		float * polyverts = new float[3*n_params];
 		float centroid[3];
 
-		polyhedron_polyverts(curr_dist, origin, verts, n_rays, polyverts);
+		polyhedron_polyverts(curr_dist, origin, verts, n_params, polyverts);
 
-	    polyhedron_centroid(&dist[ind], verts, faces, n_rays, n_faces, centroid);
+	    polyhedron_centroid(&dist[ind], verts, faces, n_params, n_faces, centroid);
 
         const int off = 3*(i+nx*(j+k*ny));
 

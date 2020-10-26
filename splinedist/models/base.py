@@ -93,7 +93,7 @@ def kld(y_true, y_pred):
 
 class SplineDistDataBase(RollingSequence):
 
-    def __init__(self, X, Y, n_rays, grid, batch_size, patch_size, length, use_gpu=False, sample_ind_cache=True, maxfilter_patch_size=None, augmenter=None, foreground_prob=0):
+    def __init__(self, X, Y, n_params, grid, batch_size, patch_size, length, use_gpu=False, sample_ind_cache=True, maxfilter_patch_size=None, augmenter=None, foreground_prob=0):
 
         super().__init__(data_size=len(X), batch_size=batch_size, length=length, shuffle=True)
 
@@ -124,7 +124,7 @@ class SplineDistDataBase(RollingSequence):
 
         self.X, self.Y = X, Y
         # self.batch_size = batch_size
-        self.n_rays = n_rays
+        self.n_params = n_params
         self.patch_size = patch_size
         self.ss_grid = (slice(None),) + tuple(slice(0, None, g) for g in grid)
         self.use_gpu = bool(use_gpu)
@@ -235,7 +235,7 @@ class SplineDistBase(BaseModel):
         
         #REFACTORED
         def split_dist_true_mask(dist_true_mask):
-            #return tf.split(dist_true_mask, num_or_size_splits=[self.config.n_rays,-1], axis=-1)
+            #return tf.split(dist_true_mask, num_or_size_splits=[self.config.n_params,-1], axis=-1)
             return tf.split(dist_true_mask, num_or_size_splits=[800,-1], axis=-1)
         
         #REFACTORED
@@ -351,7 +351,7 @@ class SplineDistBase(BaseModel):
 
             sh = [s//grid_dict.get(a,1) for a,s in zip(axes_net,x.shape)]
             sh[channel] = 1;                  prob = np.empty(sh,np.float32)
-            sh[channel] = self.config.n_rays; dist = np.empty(sh,np.float32)
+            sh[channel] = self.config.n_params; dist = np.empty(sh,np.float32)
 
             n_block_overlaps = [int(np.ceil(overlap/blocksize)) for overlap, blocksize
                                 in zip(axes_net_tile_overlaps, axes_net_div_by)]

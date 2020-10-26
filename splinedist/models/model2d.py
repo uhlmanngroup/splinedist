@@ -27,9 +27,9 @@ from ..nms import non_maximum_suppression
 
 class SplineDistData2D(SplineDistDataBase):
 
-    def __init__(self, X, Y, batch_size, n_rays, length, patch_size=(256,256), b=32, grid=(1,1), shape_completion=False, augmenter=None, foreground_prob=0, **kwargs):
+    def __init__(self, X, Y, batch_size, n_params, length, patch_size=(256,256), b=32, grid=(1,1), shape_completion=False, augmenter=None, foreground_prob=0, **kwargs):
 
-        super().__init__(X=X, Y=Y, n_rays=n_rays, grid=grid,
+        super().__init__(X=X, Y=Y, n_params=n_params, grid=grid,
                          batch_size=batch_size, patch_size=patch_size, length=length,
                          augmenter=augmenter, foreground_prob=foreground_prob, **kwargs)
 
@@ -59,10 +59,10 @@ class SplineDistData2D(SplineDistDataBase):
 
         if self.shape_completion:
             Y_cleared = [clear_border(lbl) for lbl in Y]
-            dist      = np.stack([spline_dist(lbl,self.n_rays,mode=self.sd_mode)[self.b+(slice(None),)] for lbl in Y_cleared])
+            dist      = np.stack([spline_dist(lbl,self.n_params,mode=self.sd_mode)[self.b+(slice(None),)] for lbl in Y_cleared])
             dist_mask = np.stack([edt_prob(lbl[self.b]) for lbl in Y_cleared])
         else:
-            dist      = np.stack([spline_dist(lbl,self.n_rays,mode=self.sd_mode) for lbl in Y])
+            dist      = np.stack([spline_dist(lbl,self.n_params,mode=self.sd_mode) for lbl in Y])
             dist_mask = prob
 
         X = np.stack(X)
@@ -90,7 +90,7 @@ class Config2D(BaseConfig):
     ----------
     axes : str or None
         Axes of the input images.
-    n_rays : int
+    n_params : int
         2 * number of control points
     n_channel_in : int
         Number of channels of given input image (default: 1).
@@ -153,13 +153,13 @@ class Config2D(BaseConfig):
         .. _ReduceLROnPlateau: https://keras.io/callbacks/#reducelronplateau
     """
 
-    def __init__(self, axes='YX', n_rays=32, n_channel_in=1, grid=(1,1), backbone='unet', **kwargs):
+    def __init__(self, axes='YX', n_params=32, n_channel_in=1, grid=(1,1), backbone='unet', **kwargs):
         """See class docstring."""
 
-        super().__init__(axes=axes, n_channel_in=n_channel_in, n_channel_out=1+n_rays)
+        super().__init__(axes=axes, n_channel_in=n_channel_in, n_channel_out=1+n_params)
 
         # directly set by parameters
-        self.n_rays                    = int(n_rays)
+        self.n_params                    = int(n_params)
         self.grid                      = _normalize_grid(grid,2)
         self.backbone                  = str(backbone).lower()
 
@@ -277,7 +277,7 @@ class SplineDist2D(SplineDistBase):
                              name='features', padding='same', activation=self.config.unet_activation)(unet)
 
         output_prob  = Conv2D(1,                  (1,1), name='prob', padding='same', activation='sigmoid')(unet)
-        output_dist  = Conv2D(self.config.n_rays, (1,1), name='dist', padding='same', activation='linear')(unet)
+        output_dist  = Conv2D(self.config.n_params, (1,1), name='dist', padding='same', activation='linear')(unet)
         return Model([input_img], [output_prob,output_dist])
 
 
@@ -339,7 +339,7 @@ class SplineDist2D(SplineDistBase):
             self.prepare_for_training()
 
         data_kwargs = dict (
-            n_rays           = self.config.n_rays,
+            n_params           = self.config.n_params,
             patch_size       = self.config.train_patch_size,
             grid             = self.config.grid,
             shape_completion = self.config.train_shape_completion,
@@ -358,10 +358,10 @@ class SplineDist2D(SplineDistBase):
 
         if self.config.train_tensorboard:
             # show dist for three rays
-            _n = min(3, self.config.n_rays)
+            _n = min(3, self.config.n_params)
             channel = axes_dict(self.config.axes)['C']
             output_slices = [[slice(None)]*4,[slice(None)]*4]
-            output_slices[1][1+channel] = slice(0,(self.config.n_rays//_n)*_n,self.config.n_rays//_n)
+            output_slices[1][1+channel] = slice(0,(self.config.n_params//_n)*_n,self.config.n_params//_n)
             if IS_TF_1:
                 for cb in self.callbacks:
                     if isinstance(cb,CARETensorBoard):
