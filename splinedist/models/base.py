@@ -46,7 +46,7 @@ def generic_masked_loss(mask, loss, weights=1, norm_by_mask=True, reg_weight=0, 
         
         phi = np.load('./phi_6.npy')
         phi = tf.convert_to_tensor(phi)
-        SplineContour = sg.SplineCurveVectorized(16.0,sg.B1(),True,c_pred)
+        SplineContour = sg.SplineCurveVectorized(6,sg.B3(),True,c_pred)
         y_pred = (SplineContour.sampleSequential(phi))            
         y_pred = tf.reshape(y_pred,(tf.shape(y_pred)[0],tf.shape(y_pred)[1],tf.shape(y_pred)[2],-1))        
                 
