@@ -9,12 +9,13 @@ from csbdeep.utils import _raise
 from ..utils import path_absolute, _is_power_of_2, _normalize_grid
 from ..matching import _check_label_array
 
-import controlpointsgenerator as cpg
+import splinegenerator as sg
 from scipy.special import expit
 import math
 from skimage import measure
 from scipy.interpolate import interp1d
 import cv2
+import tensorflow as tf
 
 def spline_dist(a, n_params=32, mode='cpp'):
     """'a' assumbed to be a label image with integer values that encode object ids. id 0 denotes background."""
@@ -73,16 +74,18 @@ def polygons_to_label(coord, prob, points, shape=None, thr=-np.inf):
     points = points[ind]
     
     M = coord.shape[3]
-    splineCurve = cpg.SplineCurve(M,cpg.B3(),True)    
+    phi = np.load('./phi_' + str(M) + '.npy')
+    phi = tf.convert_to_tensor(phi)
 
     i = 1
     for p in points:
         if prob[p[0],p[1]] < thr:
             continue
-        splineCurve.coefs = coord[p[0],p[1]]
-        splineCurve.coefs = np.transpose(splineCurve.coefs,(1,0))        
-        contour = splineCurve.sampleSequential(1000)  
-        #contour = splineCurve.coefs
+        coefs = coord[p[0],p[1]]
+        coefs = np.transpose(coefs,(1,0))         
+        contour = sg.SplineCurveVectorized(M,sg.B3(),True,coefs)
+        contour = (contour.sampleSequential(phi))
+        contour = contour.numpy()  
         
         rr,cc = polygon(contour[:,0], contour[:,1], sh)
         lbl[rr,cc] = i

@@ -17,14 +17,10 @@ class SplineCurve:
 
     
 class SplineCurveVectorized(SplineCurve):
-
-
     def sampleSequential(self, phi): 
         contour_points = tf.linalg.matmul(phi, self.coefs)
         return contour_points
-
-
-
+    
 
 class SplineGenerator:
     unimplementedMessage = 'This function is not implemented.'
