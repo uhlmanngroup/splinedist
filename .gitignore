@@ -21,6 +21,7 @@ htmlcov/
 *.tfevents.*
 config.json
 thresholds.json
+*.npy
 
 data/
 
