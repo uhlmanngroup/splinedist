@@ -1,7 +1,7 @@
 
 # SplineDist: Automated Cell Segmentation with Spline Curves 
 
-This repository contains the implementation of SplineDist, a machine learning framework for automated cell segmentation with spline curves.  The [manuscript](https://www.biorxiv.org/) is *currently under review*. The code in its current state allows reproducing the paper experiments but is still in development. We are currently working to package it in a cleaned and optimized form. In the meantime, we encourage interested end-users to contact us for more information and assistance.
+This repository contains the implementation of SplineDist, a machine learning framework for automated cell segmentation with spline curves.  The [manuscript](https://www.biorxiv.org/content/10.1101/2020.10.27.357640v1) is *currently under review*. The code in its current state allows reproducing the paper experiments but is still in development. We are currently working to package it in a cleaned and optimized form. In the meantime, we encourage interested end-users to contact us for more information and assistance.
 
 
 ## Overview
