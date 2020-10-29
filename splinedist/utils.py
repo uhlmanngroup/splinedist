@@ -14,6 +14,7 @@ from csbdeep.utils import _raise
 from csbdeep.utils.six import Path
 
 from .matching import matching_dataset
+import splinegenerator as sg
 
 
 def gputools_available():
@@ -284,3 +285,47 @@ def optimize_threshold(Y, Yhat, model, nms_thresh, measure='accuracy', iou_thres
 
     verbose > 1 and print('\n',opt, flush=True)
     return opt.x, -opt.fun
+
+
+def wrapIndex(t, k, M, half_support):
+    wrappedT = t - k
+    t_left = t - half_support
+    t_right = t + half_support
+    if k < t_left:
+        if t_left <= k + M <= t_right:
+            wrappedT = t - (k + M)
+    elif k > t + half_support:
+        if t_left <= k - M <= t_right:
+            wrappedT = t - (k - M)
+    return wrappedT
+
+
+def phi_generator(M, contoursize_max):
+    contoursize_max = 400
+
+    ts = np.linspace(0, float(M), num=contoursize_max, endpoint=False)
+    wrapped_indices = np.array([[wrapIndex(t, k, M, 2)
+                                 for k in range(M)] for t in ts])
+    vfunc = np.vectorize(sg.B3().value)
+    phi = vfunc(wrapped_indices)     
+    phi = phi.astype(np.float32)
+    np.save('phi_' + str(M) + '.npy',phi)
+    return
+    
+    
+def grid_generator(M, patch_size, grid_subsampled):
+    coord = np.ones((patch_size[0],patch_size[1],M,2))
+
+    xgrid_points = np.linspace(0,coord.shape[0]-1,coord.shape[0])
+    ygrid_points = np.linspace(0,coord.shape[1]-1,coord.shape[1])
+    xgrid, ygrid = np.meshgrid(xgrid_points,ygrid_points)
+    xgrid, ygrid = np.transpose(xgrid), np.transpose(ygrid)
+    grid = np.stack((xgrid,ygrid),axis = 2)
+    grid = np.expand_dims(grid, axis = 2)
+    grid = np.repeat(grid, coord.shape[2], axis = 2)
+    grid = np.expand_dims(grid, axis = 0)
+
+    grid = grid[:,0::grid_subsampled[0],0::grid_subsampled[1]]
+    grid = grid.astype(np.float32)
+    np.save('grid_' + str(M) + '.npy', grid)
+    return
