@@ -235,7 +235,7 @@ class SplineDistBase(BaseModel):
         #REFACTORED
         def split_dist_true_mask(dist_true_mask):
             #return tf.split(dist_true_mask, num_or_size_splits=[self.config.n_params,-1], axis=-1)
-            return tf.split(dist_true_mask, num_or_size_splits=[800,-1], axis=-1)
+            return tf.split(dist_true_mask, num_or_size_splits=[2 * self.config.contoursize_max,-1], axis=-1)
         
         #REFACTORED
         def dist_loss(dist_true_mask, dist_pred):

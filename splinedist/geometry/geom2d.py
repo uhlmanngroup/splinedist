@@ -17,13 +17,12 @@ from scipy.interpolate import interp1d
 import cv2
 import tensorflow as tf
 
-def spline_dist(a, n_params=32, mode='cpp'):
+def spline_dist(a, n_params=32, contoursize_max=400):
     """'a' assumbed to be a label image with integer values that encode object ids. id 0 denotes background."""
 
     n_params >= 3 or _raise(ValueError("need 'n_params' >= 3"))
     
-    contour_points = 400
-    dist = np.zeros((a.shape[0],a.shape[1],contour_points,2))
+    dist = np.zeros((a.shape[0],a.shape[1],contoursize_max,2))
     
     obj_list = np.unique(a)
     obj_list = obj_list[1:]  
@@ -33,7 +32,7 @@ def spline_dist(a, n_params=32, mode='cpp'):
         mask_temp[mask_temp != obj_list[i]] = 0
         mask_temp[mask_temp > 0] = 1
         
-        contour = contour_cv2_mask_uniform(mask_temp)
+        contour = contour_cv2_mask_uniform(mask_temp, contoursize_max)
         idx_nonzero = np.argwhere(mask_temp)
         dist[idx_nonzero[:,0],idx_nonzero[:,1]] = contour
             
@@ -110,8 +109,7 @@ def relabel_image_splinedist(lbl, n_params, **kwargs):
     points = np.array(tuple(np.array(r.centroid).astype(int) for r in regionprops(lbl)))    
     return polygons_to_label(coord, np.ones_like(lbl), points, shape=lbl.shape)
  
-def contour_cv2_mask_uniform(mask):
-    num_pts = 400        
+def contour_cv2_mask_uniform(mask, contoursize_max):
     mask = mask.astype(np.uint8)    
     contours,_ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     areas = [cv2.contourArea(cnt) for cnt in contours]    
@@ -134,7 +132,7 @@ def contour_cv2_mask_uniform(mask):
     s = np.array(s)/s[-1]
     fx = interp1d(s,contour[:,0]/rows, kind='linear')
     fy = interp1d(s,contour[:,1]/cols, kind='linear')
-    S = np.linspace(0,1,num_pts, endpoint = False)
+    S = np.linspace(0,1,contoursize_max, endpoint = False)
     X = rows * fx(S)
     Y = cols * fy(S)
 
