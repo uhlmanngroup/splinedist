@@ -7,15 +7,25 @@ from tqdm import tqdm
 
 from csbdeep.models import BaseConfig
 from csbdeep.internals.blocks import unet_block
-from csbdeep.utils import _raise, backend_channels_last, axes_check_and_normalize, axes_dict
-from csbdeep.utils.tf import keras_import, IS_TF_1, CARETensorBoard, CARETensorBoardImage
+from csbdeep.utils import (
+    _raise,
+    backend_channels_last,
+    axes_check_and_normalize,
+    axes_dict,
+)
+from csbdeep.utils.tf import (
+    keras_import,
+    IS_TF_1,
+    CARETensorBoard,
+    CARETensorBoardImage,
+)
 from skimage.segmentation import clear_border
 from distutils.version import LooseVersion
 
 keras = keras_import()
-K = keras_import('backend')
-Input, Conv2D, MaxPooling2D = keras_import('layers', 'Input', 'Conv2D', 'MaxPooling2D')
-Model = keras_import('models', 'Model')
+K = keras_import("backend")
+Input, Conv2D, MaxPooling2D = keras_import("layers", "Input", "Conv2D", "MaxPooling2D")
+Model = keras_import("models", "Model")
 
 from .base import SplineDistBase, SplineDistDataBase
 from ..sample_patches import sample_patches
@@ -24,66 +34,107 @@ from ..geometry import spline_dist, dist_to_coord, polygons_to_label
 from ..nms import non_maximum_suppression
 
 
-
 class SplineDistData2D(SplineDistDataBase):
+    def __init__(
+        self,
+        X,
+        Y,
+        batch_size,
+        n_params,
+        length,
+        contoursize_max,
+        patch_size=(256, 256),
+        b=32,
+        grid=(1, 1),
+        shape_completion=False,
+        augmenter=None,
+        foreground_prob=0,
+        **kwargs
+    ):
 
-    def __init__(self, X, Y, batch_size, n_params, length, contoursize_max, patch_size=(256,256), b=32, grid=(1,1), shape_completion=False, augmenter=None, foreground_prob=0, **kwargs):
-
-        super().__init__(X=X, Y=Y, n_params=n_params, grid=grid,
-                         batch_size=batch_size, patch_size=patch_size, length=length,
-                         augmenter=augmenter, foreground_prob=foreground_prob, **kwargs)
+        super().__init__(
+            X=X,
+            Y=Y,
+            n_params=n_params,
+            grid=grid,
+            batch_size=batch_size,
+            patch_size=patch_size,
+            length=length,
+            augmenter=augmenter,
+            foreground_prob=foreground_prob,
+            **kwargs
+        )
 
         self.shape_completion = bool(shape_completion)
         if self.shape_completion and b > 0:
-            self.b = slice(b,-b),slice(b,-b)
+            self.b = slice(b, -b), slice(b, -b)
         else:
-            self.b = slice(None),slice(None)
+            self.b = slice(None), slice(None)
 
-        self.sd_mode = 'opencl' if self.use_gpu else 'cpp'
-        
+        self.sd_mode = "opencl" if self.use_gpu else "cpp"
+
         self.contoursize_max = contoursize_max
-
 
     def __getitem__(self, i):
         idx = self.batch(i)
-        arrays = [sample_patches((self.Y[k],) + self.channels_as_tuple(self.X[k]),
-                                 patch_size=self.patch_size, n_samples=1,
-                                 valid_inds=self.get_valid_inds(k)) for k in idx]
+        arrays = [
+            sample_patches(
+                (self.Y[k],) + self.channels_as_tuple(self.X[k]),
+                patch_size=self.patch_size,
+                n_samples=1,
+                valid_inds=self.get_valid_inds(k),
+            )
+            for k in idx
+        ]
 
         if self.n_channel is None:
-            X, Y = list(zip(*[(x[0][self.b],y[0]) for y,x in arrays]))
+            X, Y = list(zip(*[(x[0][self.b], y[0]) for y, x in arrays]))
         else:
-            X, Y = list(zip(*[(np.stack([_x[0] for _x in x],axis=-1)[self.b], y[0]) for y,*x in arrays]))
+            X, Y = list(
+                zip(
+                    *[
+                        (np.stack([_x[0] for _x in x], axis=-1)[self.b], y[0])
+                        for y, *x in arrays
+                    ]
+                )
+            )
 
-        X, Y = tuple(zip(*tuple(self.augmenter(_x, _y) for _x, _y in zip(X,Y))))
+        X, Y = tuple(zip(*tuple(self.augmenter(_x, _y) for _x, _y in zip(X, Y))))
 
         prob = np.stack([edt_prob(lbl[self.b]) for lbl in Y])
 
         if self.shape_completion:
             Y_cleared = [clear_border(lbl) for lbl in Y]
-            dist      = np.stack([spline_dist(lbl,self.n_params,self.contoursize_max)
-                                 [self.b+(slice(None),)] for lbl in Y_cleared])
+            dist = np.stack(
+                [
+                    spline_dist(lbl, self.n_params, self.contoursize_max)[
+                        self.b + (slice(None),)
+                    ]
+                    for lbl in Y_cleared
+                ]
+            )
             dist_mask = np.stack([edt_prob(lbl[self.b]) for lbl in Y_cleared])
         else:
-            dist      = np.stack([spline_dist(lbl,self.n_params,self.contoursize_max) for lbl in Y])
+            dist = np.stack(
+                [spline_dist(lbl, self.n_params, self.contoursize_max) for lbl in Y]
+            )
             dist_mask = prob
 
         X = np.stack(X)
-        if X.ndim == 3: # input image has no channel axis
-            X = np.expand_dims(X,-1)
-        prob = np.expand_dims(prob,-1)
-        dist_mask = np.expand_dims(dist_mask,-1)
+        if X.ndim == 3:  # input image has no channel axis
+            X = np.expand_dims(X, -1)
+        prob = np.expand_dims(prob, -1)
+        dist_mask = np.expand_dims(dist_mask, -1)
 
         # subsample wth given grid
         dist_mask = dist_mask[self.ss_grid]
-        prob      = prob[self.ss_grid]
-        dist      = dist[self.ss_grid]
+        prob = prob[self.ss_grid]
+        dist = dist[self.ss_grid]
 
         # append dist_mask to dist as additional channel
-        dist = np.concatenate([dist,dist_mask],axis=-1)
+        dist = np.concatenate([dist, dist_mask], axis=-1)
 
-        return [X], [prob,dist]
-
+        return [X], [prob, dist]
 
 
 class Config2D(BaseConfig):
@@ -158,69 +209,85 @@ class Config2D(BaseConfig):
         .. _ReduceLROnPlateau: https://keras.io/callbacks/#reducelronplateau
     """
 
-    def __init__(self, axes='YX', n_params=32, n_channel_in=1, grid=(1,1), backbone='unet', contoursize_max=400, **kwargs):
+    def __init__(
+        self,
+        axes="YX",
+        n_params=32,
+        n_channel_in=1,
+        grid=(1, 1),
+        backbone="unet",
+        contoursize_max=400,
+        **kwargs
+    ):
         """See class docstring."""
 
-        super().__init__(axes=axes, n_channel_in=n_channel_in, n_channel_out=1+n_params)
+        super().__init__(
+            axes=axes, n_channel_in=n_channel_in, n_channel_out=1 + n_params
+        )
 
         # directly set by parameters
-        self.n_params                  = int(n_params)
-        self.grid                      = _normalize_grid(grid,2)
-        self.backbone                  = str(backbone).lower()
-        self.contoursize_max           = int(contoursize_max)
+        self.n_params = int(n_params)
+        self.grid = _normalize_grid(grid, 2)
+        self.backbone = str(backbone).lower()
+        self.contoursize_max = int(contoursize_max)
 
         # default config (can be overwritten by kwargs below)
-        if self.backbone == 'unet':
-            self.unet_n_depth          = 3
-            self.unet_kernel_size      = 3,3
-            self.unet_n_filter_base    = 32
+        if self.backbone == "unet":
+            self.unet_n_depth = 3
+            self.unet_kernel_size = 3, 3
+            self.unet_n_filter_base = 32
             self.unet_n_conv_per_depth = 2
-            self.unet_pool             = 2,2
-            self.unet_activation       = 'relu'
-            self.unet_last_activation  = 'relu'
-            self.unet_batch_norm       = False
-            self.unet_dropout          = 0.0
-            self.unet_prefix           = ''
-            self.net_conv_after_unet   = 128
+            self.unet_pool = 2, 2
+            self.unet_activation = "relu"
+            self.unet_last_activation = "relu"
+            self.unet_batch_norm = False
+            self.unet_dropout = 0.0
+            self.unet_prefix = ""
+            self.net_conv_after_unet = 128
         else:
             # TODO: resnet backbone for 2D model?
             raise ValueError("backbone '%s' not supported." % self.backbone)
 
         # net_mask_shape not needed but kept for legacy reasons
         if backend_channels_last():
-            self.net_input_shape       = None,None,self.n_channel_in
-            self.net_mask_shape        = None,None,1
+            self.net_input_shape = None, None, self.n_channel_in
+            self.net_mask_shape = None, None, 1
         else:
-            self.net_input_shape       = self.n_channel_in,None,None
-            self.net_mask_shape        = 1,None,None
+            self.net_input_shape = self.n_channel_in, None, None
+            self.net_mask_shape = 1, None, None
 
-        self.train_shape_completion    = False
-        self.train_completion_crop     = 32
-        self.train_patch_size          = 256,256
-        self.train_background_reg      = 1e-4
-        self.train_foreground_only     = 0.9
+        self.train_shape_completion = False
+        self.train_completion_crop = 32
+        self.train_patch_size = 256, 256
+        self.train_background_reg = 1e-4
+        self.train_foreground_only = 0.9
 
-        self.train_dist_loss           = 'mae'
-        self.train_loss_weights        = 1,0.2
-        self.train_epochs              = 400
-        self.train_steps_per_epoch     = 100
-        self.train_learning_rate       = 0.0003
-        self.train_batch_size          = 4
-        self.train_n_val_patches       = None
-        self.train_tensorboard         = True
+        self.train_dist_loss = "mae"
+        self.train_loss_weights = 1, 0.2
+        self.train_epochs = 400
+        self.train_steps_per_epoch = 100
+        self.train_learning_rate = 0.0003
+        self.train_batch_size = 4
+        self.train_n_val_patches = None
+        self.train_tensorboard = True
         # the parameter 'min_delta' was called 'epsilon' for keras<=2.1.5
-        min_delta_key = 'epsilon' if LooseVersion(keras.__version__)<=LooseVersion('2.1.5') else 'min_delta'
-        self.train_reduce_lr           = {'factor': 0.5, 'patience': 40, min_delta_key: 0}
+        min_delta_key = (
+            "epsilon"
+            if LooseVersion(keras.__version__) <= LooseVersion("2.1.5")
+            else "min_delta"
+        )
+        self.train_reduce_lr = {"factor": 0.5, "patience": 40, min_delta_key: 0}
 
-        self.use_gpu                   = False
+        self.use_gpu = False
 
         # remove derived attributes that shouldn't be overwritten
-        for k in ('n_dim', 'n_channel_out'):
-            try: del kwargs[k]
-            except KeyError: pass
+        for k in ("n_dim", "n_channel_out"):
+            try:
+                del kwargs[k]
+            except KeyError:
+                pass
 
         self.update_parameters(False, **kwargs)
-
 
 
 class SplineDist2D(SplineDistBase):
@@ -255,39 +322,67 @@ class SplineDist2D(SplineDistBase):
         Path to model folder (which stores configuration, weights, etc.)
     """
 
-    def __init__(self, config=Config2D(), name=None, basedir='.'):
+    def __init__(self, config=Config2D(), name=None, basedir="."):
         """See class docstring."""
         super().__init__(config, name=name, basedir=basedir)
 
-
     def _build(self):
-        self.config.backbone == 'unet' or _raise(NotImplementedError())
-        unet_kwargs = {k[len('unet_'):]:v for (k,v) in vars(self.config).items() if k.startswith('unet_')}
+        self.config.backbone == "unet" or _raise(NotImplementedError())
+        unet_kwargs = {
+            k[len("unet_") :]: v
+            for (k, v) in vars(self.config).items()
+            if k.startswith("unet_")
+        }
 
-        input_img  = Input(self.config.net_input_shape, name='input')
+        input_img = Input(self.config.net_input_shape, name="input")
 
         # maxpool input image to grid size
-        pooled = np.array([1,1])
+        pooled = np.array([1, 1])
         pooled_img = input_img
         while tuple(pooled) != tuple(self.config.grid):
             pool = 1 + (np.asarray(self.config.grid) > pooled)
             pooled *= pool
             for _ in range(self.config.unet_n_conv_per_depth):
-                pooled_img = Conv2D(self.config.unet_n_filter_base, self.config.unet_kernel_size,
-                                    padding='same', activation=self.config.unet_activation)(pooled_img)
+                pooled_img = Conv2D(
+                    self.config.unet_n_filter_base,
+                    self.config.unet_kernel_size,
+                    padding="same",
+                    activation=self.config.unet_activation,
+                )(pooled_img)
             pooled_img = MaxPooling2D(pool)(pooled_img)
 
-        unet        = unet_block(**unet_kwargs)(pooled_img)
+        unet = unet_block(**unet_kwargs)(pooled_img)
         if self.config.net_conv_after_unet > 0:
-            unet    = Conv2D(self.config.net_conv_after_unet, self.config.unet_kernel_size,
-                             name='features', padding='same', activation=self.config.unet_activation)(unet)
+            unet = Conv2D(
+                self.config.net_conv_after_unet,
+                self.config.unet_kernel_size,
+                name="features",
+                padding="same",
+                activation=self.config.unet_activation,
+            )(unet)
 
-        output_prob  = Conv2D(1,                    (1,1), name='prob', padding='same', activation='sigmoid')(unet)
-        output_dist  = Conv2D(self.config.n_params, (1,1), name='dist', padding='same', activation='linear')(unet)
-        return Model([input_img], [output_prob,output_dist])
+        output_prob = Conv2D(
+            1, (1, 1), name="prob", padding="same", activation="sigmoid"
+        )(unet)
+        output_dist = Conv2D(
+            self.config.n_params,
+            (1, 1),
+            name="dist",
+            padding="same",
+            activation="linear",
+        )(unet)
+        return Model([input_img], [output_prob, output_dist])
 
-
-    def train(self, X, Y, validation_data, augmenter=None, seed=None, epochs=None, steps_per_epoch=None):
+    def train(
+        self,
+        X,
+        Y,
+        validation_data,
+        augmenter=None,
+        seed=None,
+        epochs=None,
+        steps_per_epoch=None,
+    ):
         """Train the neural network with the given data.
 
         Parameters
@@ -329,92 +424,165 @@ class SplineDist2D(SplineDistBase):
             steps_per_epoch = self.config.train_steps_per_epoch
 
         validation_data is not None or _raise(ValueError())
-        ((isinstance(validation_data,(list,tuple)) and len(validation_data)==2)
-            or _raise(ValueError('validation_data must be a pair of numpy arrays')))
+        (
+            (isinstance(validation_data, (list, tuple)) and len(validation_data) == 2)
+            or _raise(ValueError("validation_data must be a pair of numpy arrays"))
+        )
 
         patch_size = self.config.train_patch_size
-        axes = self.config.axes.replace('C','')
-        b = self.config.train_completion_crop if self.config.train_shape_completion else 0
+        axes = self.config.axes.replace("C", "")
+        b = (
+            self.config.train_completion_crop
+            if self.config.train_shape_completion
+            else 0
+        )
         div_by = self._axes_div_by(axes)
-        [(p-2*b) % d == 0 or _raise(ValueError(
-            "'train_patch_size' - 2*'train_completion_crop' must be divisible by {d} along axis '{a}'".format(a=a,d=d) if self.config.train_shape_completion else
-            "'train_patch_size' must be divisible by {d} along axis '{a}'".format(a=a,d=d)
-         )) for p,d,a in zip(patch_size,div_by,axes)]
+        [
+            (p - 2 * b) % d == 0
+            or _raise(
+                ValueError(
+                    "'train_patch_size' - 2*'train_completion_crop' must be divisible by {d} along axis '{a}'".format(
+                        a=a, d=d
+                    )
+                    if self.config.train_shape_completion
+                    else "'train_patch_size' must be divisible by {d} along axis '{a}'".format(
+                        a=a, d=d
+                    )
+                )
+            )
+            for p, d, a in zip(patch_size, div_by, axes)
+        ]
 
         if not self._model_prepared:
             self.prepare_for_training()
 
-        data_kwargs = dict (
-            n_params         = self.config.n_params,
-            patch_size       = self.config.train_patch_size,
-            grid             = self.config.grid,
-            shape_completion = self.config.train_shape_completion,
-            b                = self.config.train_completion_crop,
-            use_gpu          = self.config.use_gpu,
-            foreground_prob  = self.config.train_foreground_only,
-            contoursize_max  = self.config.contoursize_max,
+        data_kwargs = dict(
+            n_params=self.config.n_params,
+            patch_size=self.config.train_patch_size,
+            grid=self.config.grid,
+            shape_completion=self.config.train_shape_completion,
+            b=self.config.train_completion_crop,
+            use_gpu=self.config.use_gpu,
+            foreground_prob=self.config.train_foreground_only,
+            contoursize_max=self.config.contoursize_max,
         )
 
         # generate validation data and store in numpy arrays
         n_data_val = len(validation_data[0])
-        n_take = self.config.train_n_val_patches if self.config.train_n_val_patches is not None else n_data_val
-        _data_val = SplineDistData2D(*validation_data, batch_size=n_take, length=1, **data_kwargs)
+        n_take = (
+            self.config.train_n_val_patches
+            if self.config.train_n_val_patches is not None
+            else n_data_val
+        )
+        _data_val = SplineDistData2D(
+            *validation_data, batch_size=n_take, length=1, **data_kwargs
+        )
         data_val = _data_val[0]
 
-        data_train = SplineDistData2D(X, Y, batch_size=self.config.train_batch_size, augmenter=augmenter, length=epochs*steps_per_epoch, **data_kwargs)
+        data_train = SplineDistData2D(
+            X,
+            Y,
+            batch_size=self.config.train_batch_size,
+            augmenter=augmenter,
+            length=epochs * steps_per_epoch,
+            **data_kwargs
+        )
 
         if self.config.train_tensorboard:
             # show dist for three rays
             _n = min(3, self.config.n_params)
-            channel = axes_dict(self.config.axes)['C']
-            output_slices = [[slice(None)]*4,[slice(None)]*4]
-            output_slices[1][1+channel] = slice(0,(self.config.n_params//_n)*_n,self.config.n_params//_n)
+            channel = axes_dict(self.config.axes)["C"]
+            output_slices = [[slice(None)] * 4, [slice(None)] * 4]
+            output_slices[1][1 + channel] = slice(
+                0, (self.config.n_params // _n) * _n, self.config.n_params // _n
+            )
             if IS_TF_1:
                 for cb in self.callbacks:
-                    if isinstance(cb,CARETensorBoard):
+                    if isinstance(cb, CARETensorBoard):
                         cb.output_slices = output_slices
                         # target image for dist includes dist_mask and thus has more channels than dist output
-                        cb.output_target_shapes = [None,[None]*4]
-                        cb.output_target_shapes[1][1+channel] = data_val[1][1].shape[1+channel]
-            elif self.basedir is not None and not any(isinstance(cb,CARETensorBoardImage) for cb in self.callbacks):
-                self.callbacks.append(CARETensorBoardImage(model=self.keras_model, data=data_val, log_dir=str(self.logdir/'logs'/'images'),
-                                                           n_images=3, prob_out=False, output_slices=output_slices))
+                        cb.output_target_shapes = [None, [None] * 4]
+                        cb.output_target_shapes[1][1 + channel] = data_val[1][1].shape[
+                            1 + channel
+                        ]
+            elif self.basedir is not None and not any(
+                isinstance(cb, CARETensorBoardImage) for cb in self.callbacks
+            ):
+                self.callbacks.append(
+                    CARETensorBoardImage(
+                        model=self.keras_model,
+                        data=data_val,
+                        log_dir=str(self.logdir / "logs" / "images"),
+                        n_images=3,
+                        prob_out=False,
+                        output_slices=output_slices,
+                    )
+                )
 
         fit = self.keras_model.fit_generator if IS_TF_1 else self.keras_model.fit
-        history = fit(iter(data_train), validation_data=data_val,
-                      epochs=epochs, steps_per_epoch=steps_per_epoch,
-                      callbacks=self.callbacks, verbose=1)
+        history = fit(
+            iter(data_train),
+            validation_data=data_val,
+            epochs=epochs,
+            steps_per_epoch=steps_per_epoch,
+            callbacks=self.callbacks,
+            verbose=1,
+        )
         self._training_finished()
 
         return history
 
-
-    def _instances_from_prediction(self, img_shape, prob, dist, prob_thresh=None, nms_thresh=None, overlap_label=None, **nms_kwargs):
-        if prob_thresh is None: prob_thresh = self.thresholds.prob
-        if nms_thresh  is None: nms_thresh  = self.thresholds.nms
-        if overlap_label is not None: raise NotImplementedError("overlap_label not supported for 2D yet!")
+    def _instances_from_prediction(
+        self,
+        img_shape,
+        prob,
+        dist,
+        prob_thresh=None,
+        nms_thresh=None,
+        overlap_label=None,
+        **nms_kwargs
+    ):
+        if prob_thresh is None:
+            prob_thresh = self.thresholds.prob
+        if nms_thresh is None:
+            nms_thresh = self.thresholds.nms
+        if overlap_label is not None:
+            raise NotImplementedError("overlap_label not supported for 2D yet!")
 
         coord = dist_to_coord(dist, grid=self.config.grid)
-        inds = non_maximum_suppression(coord, prob, grid=self.config.grid,
-                                       prob_thresh=prob_thresh, nms_thresh=nms_thresh, **nms_kwargs)
+        inds = non_maximum_suppression(
+            coord,
+            prob,
+            grid=self.config.grid,
+            prob_thresh=prob_thresh,
+            nms_thresh=nms_thresh,
+            **nms_kwargs
+        )
         labels = polygons_to_label(coord, prob, inds, shape=img_shape)
         # sort 'inds' such that ids in 'labels' map to entries in polygon dictionary entries
-        inds = inds[np.argsort(prob[inds[:,0],inds[:,1]])]
+        inds = inds[np.argsort(prob[inds[:, 0], inds[:, 1]])]
         # adjust for grid
-        points = inds*np.array(self.config.grid)
-        return labels, dict(coord=coord[inds[:,0],inds[:,1]], points=points, prob=prob[inds[:,0],inds[:,1]])
-
+        points = inds * np.array(self.config.grid)
+        return labels, dict(
+            coord=coord[inds[:, 0], inds[:, 1]],
+            points=points,
+            prob=prob[inds[:, 0], inds[:, 1]],
+        )
 
     def _axes_div_by(self, query_axes):
-        self.config.backbone == 'unet' or _raise(NotImplementedError())
+        self.config.backbone == "unet" or _raise(NotImplementedError())
         query_axes = axes_check_and_normalize(query_axes)
         assert len(self.config.unet_pool) == len(self.config.grid)
-        div_by = dict(zip(
-            self.config.axes.replace('C',''),
-            tuple(p**self.config.unet_n_depth * g for p,g in zip(self.config.unet_pool,self.config.grid))
-        ))
-        return tuple(div_by.get(a,1) for a in query_axes)
-
+        div_by = dict(
+            zip(
+                self.config.axes.replace("C", ""),
+                tuple(
+                    p ** self.config.unet_n_depth * g
+                    for p, g in zip(self.config.unet_pool, self.config.grid)
+                ),
+            )
+        )
+        return tuple(div_by.get(a, 1) for a in query_axes)
 
     # def _axes_tile_overlap(self, query_axes):
     #     self.config.backbone == 'unet' or _raise(NotImplementedError())
@@ -428,7 +596,6 @@ class SplineDist2D(SplineDistBase):
     #               for p,k,g in zip(self.config.unet_pool,self.config.unet_kernel_size,self.config.grid))
     #     ))
     #     return tuple(overlap.get(a,0) for a in query_axes)
-
 
     @property
     def _config_class(self):

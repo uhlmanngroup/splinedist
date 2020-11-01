@@ -10,10 +10,8 @@ from itertools import product
 from .geometry import polygons_to_label, polyhedron_to_label
 
 
-
-OBJECT_KEYS = set(('prob', 'points', 'coord', 'dist'))
-COORD_KEYS = set(('points', 'coord'))
-
+OBJECT_KEYS = set(("prob", "points", "coord", "dist"))
+COORD_KEYS = set(("points", "coord"))
 
 
 class Block:
@@ -30,14 +28,15 @@ class Block:
     min_overlap or even the entire block without context).
 
     """
+
     def __init__(self, size, min_overlap, context, pred):
         self.size = int(size)
         self.min_overlap = int(min_overlap)
         self.context = int(context)
         self.pred = pred
         self.succ = None
-        assert 0 <= self.min_overlap + 2*self.context < self.size
-        self.stride = self.size - (self.min_overlap + 2*self.context)
+        assert 0 <= self.min_overlap + 2 * self.context < self.size
+        self.stride = self.size - (self.min_overlap + 2 * self.context)
         self._start = 0
         self._frozen = False
 
@@ -99,7 +98,11 @@ class Block:
         """
         bmin, bmax = bbox
 
-        r_start = 0 if self.at_begin else (self.pred.overlap - self.pred.context_end - self.context_start)
+        r_start = (
+            0
+            if self.at_begin
+            else (self.pred.overlap - self.pred.context_end - self.context_start)
+        )
         r_end = self.size - self.context_start - self.context_end
         assert 0 <= bmin < bmax <= r_end
 
@@ -114,9 +117,11 @@ class Block:
                 raise NotFullyVisible(False)
 
         # object ends before responsible region start
-        if bmax < r_start: return False
+        if bmax < r_start:
+            return False
         # object touches the end of the responsible region (only take if at end)
-        if bmax == r_end and not self.at_end: return False
+        if bmax == r_end and not self.at_end:
+            return False
         return True
 
     # ------------------------
@@ -146,12 +151,12 @@ class Block:
         return 0 if self.at_end else self.context
 
     def __repr__(self):
-        shared  = f'{self.start:03}:{self.end:03}'
-        shared += f', size={self.context_start}-{self.size-self.context_start-self.context_end}-{self.context_end}'
+        shared = f"{self.start:03}:{self.end:03}"
+        shared += f", size={self.context_start}-{self.size-self.context_start-self.context_end}-{self.context_end}"
         if self.at_end:
-            return f'{self.__class__.__name__}({shared})'
+            return f"{self.__class__.__name__}({shared})"
         else:
-            return f'{self.__class__.__name__}({shared}, overlap={self.overlap}/{self.overlap-self.context_start-self.context_end})'
+            return f"{self.__class__.__name__}({shared}, overlap={self.overlap}/{self.overlap-self.context_start-self.context_end})"
 
     @property
     def chain(self):
@@ -181,15 +186,19 @@ class Block:
         neighboring blocks are overlapping.
 
         """
-        assert 0 <= min_overlap+2*context < block_size <= size
+        assert 0 <= min_overlap + 2 * context < block_size <= size
         assert 0 < grid <= block_size
-        block_size = _grid_divisible(grid, block_size, name='block_size', verbose=verbose)
-        min_overlap = _grid_divisible(grid, min_overlap, name='min_overlap', verbose=verbose)
-        context = _grid_divisible(grid, context, name='context', verbose=verbose)
+        block_size = _grid_divisible(
+            grid, block_size, name="block_size", verbose=verbose
+        )
+        min_overlap = _grid_divisible(
+            grid, min_overlap, name="min_overlap", verbose=verbose
+        )
+        context = _grid_divisible(grid, context, name="context", verbose=verbose)
 
         # allow size not to be divisible by grid
         size_orig = size
-        size = _grid_divisible(grid, size, name='size', verbose=False)
+        size = _grid_divisible(grid, size, name="size", verbose=False)
 
         # divide all sizes by grid
         assert all(v % grid == 0 for v in (size, block_size, min_overlap, context))
@@ -213,7 +222,8 @@ class Block:
             t.decrease_stride(1)
             excess -= 1
             t = t.succ
-            if (t == last): t = first
+            if t == last:
+                t = first
 
         # make a copy of the cover and multiply sizes by grid
         if grid > 1:
@@ -224,11 +234,11 @@ class Block:
             #
             _t = _first = first
             t = first = Block(block_size, min_overlap, context, None)
-            t.stride = _t.stride*grid
+            t.stride = _t.stride * grid
             while not _t.at_end:
                 _t = _t.succ
                 t = t.add_succ()
-                t.stride = _t.stride*grid
+                t.stride = _t.stride * grid
             last = t
 
             # change size of last block
@@ -245,8 +255,10 @@ class Block:
 
         # sanity checks
         assert first.start == 0 and last.end == size_orig
-        assert all(t.overlap-2*context >= min_overlap for t in blocks if t != last)
-        assert all(t.start % grid == 0 and t.end % grid == 0 for t in blocks if t != last)
+        assert all(t.overlap - 2 * context >= min_overlap for t in blocks if t != last)
+        assert all(
+            t.start % grid == 0 and t.end % grid == 0 for t in blocks if t != last
+        )
         # print(); [print(t) for t in first]
 
         # only neighboring blocks should be overlapping
@@ -255,7 +267,6 @@ class Block:
                 assert t.slice_write.stop <= t.succ.succ.slice_write.start
 
         return blocks
-
 
 
 class BlockND:
@@ -268,11 +279,12 @@ class BlockND:
     Also see `Block`.
 
     """
+
     def __init__(self, id, blocks, axes):
         self.id = id
         self.blocks = tuple(blocks)
         self.axes = axes_check_and_normalize(axes, length=len(self.blocks))
-        self.axis_to_block = dict(zip(self.axes,self.blocks))
+        self.axis_to_block = dict(zip(self.axes, self.blocks))
 
     def blocks_for_axes(self, axes=None):
         axes = self.axes if axes is None else axes_check_and_normalize(axes)
@@ -304,11 +316,16 @@ class BlockND:
         x[s] = region
 
     def is_responsible(self, slices, axes=None):
-        return all(t.is_responsible((s.start,s.stop)) for t,s in zip(self.blocks_for_axes(axes),slices))
+        return all(
+            t.is_responsible((s.start, s.stop))
+            for t, s in zip(self.blocks_for_axes(axes), slices)
+        )
 
     def __repr__(self):
-        slices =  ','.join(f'{a}={t.start:03}:{t.end:03}' for t,a in zip(self.blocks,self.axes))
-        return f'{self.__class__.__name__}({self.id}|{slices})'
+        slices = ",".join(
+            f"{a}={t.start:03}:{t.end:03}" for t, a in zip(self.blocks, self.axes)
+        )
+        return f"{self.__class__.__name__}({self.id}|{slices})"
 
     def __iter__(self):
         return iter(self.blocks)
@@ -343,21 +360,29 @@ class BlockND:
         # TODO: option to update labels in-place
         assert np.issubdtype(labels.dtype, np.integer)
         ndim = len(self.blocks_for_axes(axes))
-        assert ndim in (2,3)
-        assert labels.ndim == ndim and labels.shape == tuple(s.stop-s.start for s in self.slice_crop_context(axes))
+        assert ndim in (2, 3)
+        assert labels.ndim == ndim and labels.shape == tuple(
+            s.stop - s.start for s in self.slice_crop_context(axes)
+        )
 
         labels_filtered = np.zeros_like(labels)
         # problem_ids = []
         for r in regionprops(labels):
-            slices = tuple(slice(r.bbox[i],r.bbox[i+labels.ndim]) for i in range(labels.ndim))
+            slices = tuple(
+                slice(r.bbox[i], r.bbox[i + labels.ndim]) for i in range(labels.ndim)
+            )
             try:
                 if self.is_responsible(slices, axes):
                     labels_filtered[slices][r.image] = r.label
             except NotFullyVisible as e:
                 # shape_block_write = tuple(s.stop-s.start for s in self.slice_write(axes))
-                shape_object = tuple(s.stop-s.start for s in slices)
-                shape_min_overlap = tuple(t.min_overlap for t in self.blocks_for_axes(axes))
-                raise RuntimeError(f"Found object of shape {shape_object}, which violates the assumption of being smaller than 'min_overlap' {shape_min_overlap}. Increase 'min_overlap' to avoid this problem.")
+                shape_object = tuple(s.stop - s.start for s in slices)
+                shape_min_overlap = tuple(
+                    t.min_overlap for t in self.blocks_for_axes(axes)
+                )
+                raise RuntimeError(
+                    f"Found object of shape {shape_object}, which violates the assumption of being smaller than 'min_overlap' {shape_min_overlap}. Increase 'min_overlap' to avoid this problem."
+                )
 
                 # if e.args[0]: # object larger than block write region
                 #     assert any(o >= b for o,b in zip(shape_object,shape_block_write))
@@ -380,22 +405,29 @@ class BlockND:
             return labels_filtered
         else:
             # it is assumed that ids in 'labels' map to entries in 'polys'
-            assert isinstance(polys,dict) and any(k in polys for k in COORD_KEYS)
+            assert isinstance(polys, dict) and any(k in polys for k in COORD_KEYS)
             filtered_labels = np.unique(labels_filtered)
-            filtered_ind = [i-1 for i in filtered_labels if i > 0]
-            polys_out = {k: (v[filtered_ind] if k in OBJECT_KEYS else v) for k,v in polys.items()}
+            filtered_ind = [i - 1 for i in filtered_labels if i > 0]
+            polys_out = {
+                k: (v[filtered_ind] if k in OBJECT_KEYS else v)
+                for k, v in polys.items()
+            }
             for k in COORD_KEYS:
                 if k in polys_out.keys():
                     polys_out[k] = self.translate_coordinates(polys_out[k], axes=axes)
 
-        return labels_filtered, polys_out#, tuple(problem_ids)
+        return labels_filtered, polys_out  # , tuple(problem_ids)
 
     def translate_coordinates(self, coordinates, axes=None):
         """Translate local block coordinates (of read region) to global ones based on block position"""
         ndim = len(self.blocks_for_axes(axes))
-        assert isinstance(coordinates, np.ndarray) and coordinates.ndim >= 2 and coordinates.shape[1] == ndim
+        assert (
+            isinstance(coordinates, np.ndarray)
+            and coordinates.ndim >= 2
+            and coordinates.shape[1] == ndim
+        )
         start = [s.start for s in self.slice_read(axes)]
-        shape = tuple(1 if d!=1 else ndim for d in range(coordinates.ndim))
+        shape = tuple(1 if d != 1 else ndim for d in range(coordinates.ndim))
         start = np.array(start).reshape(shape)
         return coordinates + start
 
@@ -416,65 +448,91 @@ class BlockND:
         shape = tuple(shape)
         n = len(shape)
         axes = axes_check_and_normalize(axes, length=n)
-        if np.isscalar(block_size):  block_size  = n*[block_size]
-        if np.isscalar(min_overlap): min_overlap = n*[min_overlap]
-        if np.isscalar(context):     context     = n*[context]
-        if np.isscalar(grid):        grid        = n*[grid]
+        if np.isscalar(block_size):
+            block_size = n * [block_size]
+        if np.isscalar(min_overlap):
+            min_overlap = n * [min_overlap]
+        if np.isscalar(context):
+            context = n * [context]
+        if np.isscalar(grid):
+            grid = n * [grid]
         assert n == len(block_size) == len(min_overlap) == len(context) == len(grid)
 
         # compute cover for each dimension
-        cover_1d = [Block.cover(*args) for args in zip(shape, block_size, min_overlap, context, grid)]
+        cover_1d = [
+            Block.cover(*args)
+            for args in zip(shape, block_size, min_overlap, context, grid)
+        ]
         # return cover as Cartesian product of 1-dimensional blocks
-        return tuple(BlockND(i,blocks,axes) for i,blocks in enumerate(product(*cover_1d)))
-
+        return tuple(
+            BlockND(i, blocks, axes) for i, blocks in enumerate(product(*cover_1d))
+        )
 
 
 class Polygon:
-
     def __init__(self, coord, bbox=None, shape_max=None):
-        self.bbox = self.coords_bbox(coord, shape_max=shape_max) if bbox is None else bbox
-        self.coord = coord - np.array([r[0] for r in self.bbox]).reshape(2,1)
+        self.bbox = (
+            self.coords_bbox(coord, shape_max=shape_max) if bbox is None else bbox
+        )
+        self.coord = coord - np.array([r[0] for r in self.bbox]).reshape(2, 1)
         self.slice = tuple(slice(*r) for r in self.bbox)
-        self.shape = tuple(r[1]-r[0] for r in self.bbox)
-        rr,cc = polygon(*self.coord, self.shape)
+        self.shape = tuple(r[1] - r[0] for r in self.bbox)
+        rr, cc = polygon(*self.coord, self.shape)
         self.mask = np.zeros(self.shape, np.bool)
-        self.mask[rr,cc] = True
+        self.mask[rr, cc] = True
 
     @staticmethod
     def coords_bbox(*coords, shape_max=None):
-        assert all(isinstance(c, np.ndarray) and c.ndim==2 and c.shape[0]==2 for c in coords)
+        assert all(
+            isinstance(c, np.ndarray) and c.ndim == 2 and c.shape[0] == 2
+            for c in coords
+        )
         if shape_max is None:
             shape_max = (np.inf, np.inf)
         coord = np.concatenate(coords, axis=1)
-        mins = np.maximum(0,         np.floor(np.min(coord,axis=1))).astype(int)
-        maxs = np.minimum(shape_max, np.ceil (np.max(coord,axis=1))).astype(int)
-        return tuple(zip(tuple(mins),tuple(maxs)))
-
+        mins = np.maximum(0, np.floor(np.min(coord, axis=1))).astype(int)
+        maxs = np.minimum(shape_max, np.ceil(np.max(coord, axis=1))).astype(int)
+        return tuple(zip(tuple(mins), tuple(maxs)))
 
 
 class Polyhedron:
-
     def __init__(self, dist, origin, rays, bbox=None, shape_max=None):
-        self.bbox = self.coords_bbox((dist, origin), rays=rays, shape_max=shape_max) if bbox is None else bbox
+        self.bbox = (
+            self.coords_bbox((dist, origin), rays=rays, shape_max=shape_max)
+            if bbox is None
+            else bbox
+        )
         self.slice = tuple(slice(*r) for r in self.bbox)
-        self.shape = tuple(r[1]-r[0] for r in self.bbox)
-        _origin = origin.reshape(1,3) - np.array([r[0] for r in self.bbox]).reshape(1,3)
-        self.mask = polyhedron_to_label(dist[np.newaxis], _origin, rays, shape=self.shape, verbose=False).astype(np.bool)
+        self.shape = tuple(r[1] - r[0] for r in self.bbox)
+        _origin = origin.reshape(1, 3) - np.array([r[0] for r in self.bbox]).reshape(
+            1, 3
+        )
+        self.mask = polyhedron_to_label(
+            dist[np.newaxis], _origin, rays, shape=self.shape, verbose=False
+        ).astype(np.bool)
 
     @staticmethod
     def coords_bbox(*dist_origin, rays, shape_max=None):
         dists, points = zip(*dist_origin)
-        assert all(isinstance(d, np.ndarray) and d.ndim==1 and len(d)==len(rays) for d in dists)
-        assert all(isinstance(p, np.ndarray) and p.ndim==1 and len(p)==3 for p in points)
-        dists, points, verts = np.stack(dists)[...,np.newaxis], np.stack(points)[:,np.newaxis], rays.vertices[np.newaxis]
+        assert all(
+            isinstance(d, np.ndarray) and d.ndim == 1 and len(d) == len(rays)
+            for d in dists
+        )
+        assert all(
+            isinstance(p, np.ndarray) and p.ndim == 1 and len(p) == 3 for p in points
+        )
+        dists, points, verts = (
+            np.stack(dists)[..., np.newaxis],
+            np.stack(points)[:, np.newaxis],
+            rays.vertices[np.newaxis],
+        )
         coord = dists * verts + points
         coord = np.concatenate(coord, axis=0)
         if shape_max is None:
             shape_max = (np.inf, np.inf, np.inf)
-        mins = np.maximum(0,         np.floor(np.min(coord,axis=0))).astype(int)
-        maxs = np.minimum(shape_max, np.ceil (np.max(coord,axis=0))).astype(int)
-        return tuple(zip(tuple(mins),tuple(maxs)))
-
+        mins = np.maximum(0, np.floor(np.min(coord, axis=0))).astype(int)
+        maxs = np.minimum(shape_max, np.ceil(np.max(coord, axis=0))).astype(int)
+        return tuple(zip(tuple(mins), tuple(maxs)))
 
 
 # def repaint_labels(output, labels, polys, show_progress=True):
@@ -566,24 +624,21 @@ class Polyhedron:
 #                 polys[k] = np.delete(v, ind, axis=0)
 
 
-
 ############
-
 
 
 def predict_big(model, *args, **kwargs):
     from .models import SplineDist2D, SplineDist3D
-    if isinstance(model,(SplineDist2D,SplineDist3D)):
+
+    if isinstance(model, (SplineDist2D, SplineDist3D)):
         dst = model.__class__.__name__
     else:
-        dst = '{SplineDist2D, SplineDist3D}'
+        dst = "{SplineDist2D, SplineDist3D}"
     raise RuntimeError(f"This function has moved to {dst}.predict_instances_big.")
-
 
 
 class NotFullyVisible(Exception):
     pass
-
 
 
 def _grid_divisible(grid, size, name=None, verbose=True):
@@ -592,18 +647,22 @@ def _grid_divisible(grid, size, name=None, verbose=True):
     _size = size
     size = math.ceil(size / grid) * grid
     if bool(verbose):
-        print(f"{verbose if isinstance(verbose,str) else ''}increasing '{'value' if name is None else name}' from {_size} to {size} to be evenly divisible by {grid} (grid)", flush=True)
+        print(
+            f"{verbose if isinstance(verbose,str) else ''}increasing '{'value' if name is None else name}' from {_size} to {size} to be evenly divisible by {grid} (grid)",
+            flush=True,
+        )
     assert size % grid == 0
     return size
-
 
 
 def render_polygons(polys, shape):
     # TODO: this function doesn't belong here
     # -> should really refactor polygons_to_label...
-    assert isinstance(polys,dict) and all(k in polys for k in ('prob','coord','points'))
-    ind = np.arange(len(polys['prob']),dtype=np.int)
-    coord  = np.expand_dims(polys['coord'], 1)
-    prob   = np.expand_dims(polys['prob'], 1)
-    points = np.stack([ind,np.zeros_like(ind)],axis=-1)
+    assert isinstance(polys, dict) and all(
+        k in polys for k in ("prob", "coord", "points")
+    )
+    ind = np.arange(len(polys["prob"]), dtype=np.int)
+    coord = np.expand_dims(polys["coord"], 1)
+    prob = np.expand_dims(polys["prob"], 1)
+    points = np.stack([ind, np.zeros_like(ind)], axis=-1)
     return polygons_to_label(coord, prob, points, shape=shape)

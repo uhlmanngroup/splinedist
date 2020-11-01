@@ -7,7 +7,9 @@ class SplineCurve:
         if M >= splineGenerator.support():
             self.M = M
         else:
-            raise RuntimeError('M must be greater or equal than the spline generator support size.')
+            raise RuntimeError(
+                "M must be greater or equal than the spline generator support size."
+            )
             return
 
         self.splineGenerator = splineGenerator
@@ -15,15 +17,15 @@ class SplineCurve:
         self.closed = closed
         self.coefs = coefs
 
-    
+
 class SplineCurveVectorized(SplineCurve):
-    def sampleSequential(self, phi): 
+    def sampleSequential(self, phi):
         contour_points = tf.linalg.matmul(phi, self.coefs)
         return contour_points
-    
+
 
 class SplineGenerator:
-    unimplementedMessage = 'This function is not implemented.'
+    unimplementedMessage = "This function is not implemented."
 
     def value(self, x):
         # This needs to be overloaded
@@ -63,7 +65,7 @@ class B1(SplineGenerator):
 
     def support(self):
         return 2.0
-    
+
     def syntheticgeneratorvalue(self):
         return 0
 
@@ -131,9 +133,9 @@ class B3(SplineGenerator):
         elif -1 < x and x < 0:
             val = -2.0 - 3.0 * x
         elif 1 <= x and x <= 2:
-            val = (2.0 - x)
+            val = 2.0 - x
         elif -2 <= x and x <= -1:
-            val = (2.0 + x)
+            val = 2.0 + x
         return val
 
     def support(self):
