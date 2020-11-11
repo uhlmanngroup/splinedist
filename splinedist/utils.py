@@ -15,6 +15,7 @@ from csbdeep.utils.six import Path
 
 from .matching import matching_dataset
 import splinegenerator as sg
+import cv2
 
 
 def gputools_available():
@@ -301,8 +302,6 @@ def wrapIndex(t, k, M, half_support):
 
 
 def phi_generator(M, contoursize_max):
-    contoursize_max = 400
-
     ts = np.linspace(0, float(M), num=contoursize_max, endpoint=False)
     wrapped_indices = np.array([[wrapIndex(t, k, M, 2)
                                  for k in range(M)] for t in ts])
@@ -329,3 +328,28 @@ def grid_generator(M, patch_size, grid_subsampled):
     grid = grid.astype(np.float32)
     np.save('grid_' + str(M) + '.npy', grid)
     return
+
+
+def get_contoursize_max(Y_trn):
+    contoursize = []
+    for i in range(len(Y_trn)):
+        mask = Y_trn[i]
+        obj_list = np.unique(mask)
+        obj_list = obj_list[1:]  
+        
+        for j in range(len(obj_list)):  
+            mask_temp = mask.copy()     
+            mask_temp[mask_temp != obj_list[j]] = 0
+            mask_temp[mask_temp > 0] = 1
+            
+            mask_temp = mask_temp.astype(np.uint8)    
+            contours,_ = cv2.findContours(mask_temp, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+            areas = [cv2.contourArea(cnt) for cnt in contours]    
+            max_ind = np.argmax(areas)
+            contour = np.squeeze(contours[max_ind])
+            contour = np.reshape(contour,(-1,2))
+            contour = np.append(contour,contour[0].reshape((-1,2)),axis=0)
+            contoursize = np.append(contoursize,contour.shape[0])
+            
+    contoursize_max = np.amax(contoursize)            
+    return contoursize_max
