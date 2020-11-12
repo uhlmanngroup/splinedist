@@ -1,15 +1,22 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 from distutils.version import LooseVersion
 
 import numpy as np
 from csbdeep.internals.blocks import unet_block
 from csbdeep.models import BaseConfig
-from csbdeep.utils import (_raise, axes_check_and_normalize, axes_dict,
-                           backend_channels_last)
-from csbdeep.utils.tf import (IS_TF_1, CARETensorBoard, CARETensorBoardImage,
-                              keras_import)
+from csbdeep.utils import (
+    _raise,
+    axes_check_and_normalize,
+    axes_dict,
+    backend_channels_last,
+)
+from csbdeep.utils.tf import (
+    IS_TF_1,
+    CARETensorBoard,
+    CARETensorBoardImage,
+    keras_import,
+)
 from skimage.segmentation import clear_border
 
 keras = keras_import()

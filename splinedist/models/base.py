@@ -1,5 +1,4 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import math
 import sys
@@ -9,8 +8,7 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 from csbdeep.models.base_model import BaseModel
-from csbdeep.utils.tf import (IS_TF_1, CARETensorBoard, export_SavedModel,
-                              keras_import)
+from csbdeep.utils.tf import IS_TF_1, CARETensorBoard, export_SavedModel, keras_import
 from tqdm import tqdm
 
 K = keras_import("backend")
@@ -23,8 +21,13 @@ ReduceLROnPlateau, TensorBoard = keras_import(
 from csbdeep.data import Resizer
 from csbdeep.internals.predict import tile_iterator
 from csbdeep.internals.train import RollingSequence
-from csbdeep.utils import (_raise, axes_check_and_normalize, axes_dict,
-                           load_json, save_json)
+from csbdeep.utils import (
+    _raise,
+    axes_check_and_normalize,
+    axes_dict,
+    load_json,
+    save_json,
+)
 
 from .. import splinegenerator as sg
 from ..sample_patches import get_valid_inds
@@ -671,8 +674,7 @@ class SplineDistBase(BaseModel):
             Returns the label image and a dictionary with the details (coordinates, etc.) of the polygons/polyhedra.
 
         """
-        from ..big import (OBJECT_KEYS, BlockND,  # , repaint_labels
-                           _grid_divisible)
+        from ..big import OBJECT_KEYS, BlockND, _grid_divisible  # , repaint_labels
         from ..matching import relabel_sequential
 
         n = img.ndim

@@ -15,8 +15,7 @@ if not backend_channels_last():
     )
 del backend_channels_last, K
 
-from csbdeep.models import (clear_models_and_aliases, register_aliases,
-                            register_model)
+from csbdeep.models import clear_models_and_aliases, register_aliases, register_model
 
 # register pre-trained models and aliases (TODO: replace with updatable solution)
 
