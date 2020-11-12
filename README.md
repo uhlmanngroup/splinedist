@@ -18,14 +18,14 @@ Our repository relies on the [StarDist](https://github.com/mpicbg-csbd/stardist)
 
 ## Requirements 
 
-In order to use StarDist, you need to install:
+You can install StarDist as follows:
 
-1. Tensorflow (see [their documentation](https://www.tensorflow.org/install))
-
-2. [StarDist](https://github.com/mpicbg-csbd/stardist), which be installed with `pip`: 
 ```bash
-$ pip install stardist
+$ git clone https://gitlab.ebi.ac.uk/smandal/splinedist
+$ cd splinedist
+$ pip install .
 ```
+
 
 ## Walkthrough
 
