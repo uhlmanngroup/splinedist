@@ -1,0 +1,9 @@
+name: splinedist
+channels:
+  - conda-forge
+dependencies:
+  - python==3.8
+  - pip
+  - pip:
+      # Install SplineDist from source
+      - .
