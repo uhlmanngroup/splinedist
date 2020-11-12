@@ -9,7 +9,6 @@ class SplineCurve:
             raise RuntimeError(
                 "M must be greater or equal than the spline generator support size."
             )
-            return
 
         self.splineGenerator = splineGenerator
         self.halfSupport = self.splineGenerator.support() / 2.0
@@ -24,27 +23,23 @@ class SplineCurveVectorized(SplineCurve):
 
 
 class SplineGenerator:
-    unimplementedMessage = "This function is not implemented."
+    unimplementedMessage = "This method is not implemented."
 
     def value(self, x):
         # This needs to be overloaded
-        raise NotImplementedError(unimplementedMessage)
-        return
+        raise NotImplementedError(SplineGenerator.unimplementedMessage)
 
     def firstDerivativeValue(self, x):
         # This needs to be overloaded
-        raise NotImplementedError(unimplementedMessage)
-        return
+        raise NotImplementedError(SplineGenerator.unimplementedMessage)
 
     def secondDerivativeValue(self, x):
         # This needs to be overloaded
-        raise NotImplementedError(unimplementedMessage)
-        return
+        raise NotImplementedError(SplineGenerator.unimplementedMessage)
 
     def support(self):
         # This needs to be overloaded
-        raise NotImplementedError(unimplementedMessage)
-        return
+        raise NotImplementedError(SplineGenerator.unimplementedMessage)
 
 
 class B1(SplineGenerator):
