@@ -3,7 +3,6 @@ from __future__ import absolute_import, print_function
 from .geometry import (
     dist_to_coord,
     polygons_to_label,
-    ray_angles,
     relabel_image_splinedist,
     spline_dist,
 )

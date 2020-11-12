@@ -97,10 +97,6 @@ def polygons_to_label(coord, prob, points, shape=None, thr=-np.inf):
     return lbl
 
 
-def ray_angles(n_params=32):
-    return np.linspace(0, 2 * np.pi, n_params, endpoint=False)
-
-
 def relabel_image_splinedist(lbl, n_params, **kwargs):
     """relabel each label region in `lbl` with its spline representation"""
     _check_label_array(lbl, "lbl")
