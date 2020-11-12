@@ -1,14 +1,19 @@
-from __future__ import print_function, unicode_literals, absolute_import, division
-import numpy as np
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
 from warnings import warn
+
+import numpy as np
 from csbdeep.utils import normalize
-from ..utils import _normalize_grid
+
 from ..matching import matching
+from ..utils import _normalize_grid
 
 
 def random_label_cmap(n=2 ** 16, h=(0, 1), l=(0.4, 1), s=(0.2, 0.8)):
-    import matplotlib
     import colorsys
+
+    import matplotlib
 
     # cols = np.random.rand(n,3)
     # cols = np.random.uniform(0.1,1.0,(n,3))

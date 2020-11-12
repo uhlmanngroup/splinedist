@@ -1,9 +1,13 @@
-from __future__ import print_function, unicode_literals, absolute_import, division
-import numpy as np
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
 from time import time
-from .utils import _normalize_grid
-from . import splinegenerator as sg
+
+import numpy as np
 import tensorflow as tf
+
+from . import splinegenerator as sg
+from .utils import _normalize_grid
 
 
 def non_maximum_suppression(

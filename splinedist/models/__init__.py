@@ -1,9 +1,9 @@
 from __future__ import absolute_import, print_function
 
-from .model2d import Config2D, SplineDist2D, SplineDistData2D
-
 from csbdeep.utils import backend_channels_last
 from csbdeep.utils.tf import keras_import
+
+from .model2d import Config2D, SplineDist2D, SplineDistData2D
 
 K = keras_import("backend")
 if not backend_channels_last():
@@ -15,7 +15,8 @@ if not backend_channels_last():
     )
 del backend_channels_last, K
 
-from csbdeep.models import register_model, register_aliases, clear_models_and_aliases
+from csbdeep.models import (clear_models_and_aliases, register_aliases,
+                            register_model)
 
 # register pre-trained models and aliases (TODO: replace with updatable solution)
 

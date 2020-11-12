@@ -1,16 +1,17 @@
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
-import numpy as np
-import sys
 import math
-from tqdm import tqdm
+import sys
 from collections import namedtuple
 from pathlib import Path
 
-from csbdeep.models.base_model import BaseModel
-from csbdeep.utils.tf import export_SavedModel, keras_import, IS_TF_1, CARETensorBoard
-
+import numpy as np
 import tensorflow as tf
+from csbdeep.models.base_model import BaseModel
+from csbdeep.utils.tf import (IS_TF_1, CARETensorBoard, export_SavedModel,
+                              keras_import)
+from tqdm import tqdm
 
 K = keras_import("backend")
 Sequence = keras_import("utils", "Sequence")
@@ -19,21 +20,15 @@ ReduceLROnPlateau, TensorBoard = keras_import(
     "callbacks", "ReduceLROnPlateau", "TensorBoard"
 )
 
-from csbdeep.utils import (
-    _raise,
-    axes_check_and_normalize,
-    axes_dict,
-    load_json,
-    save_json,
-)
+from csbdeep.data import Resizer
 from csbdeep.internals.predict import tile_iterator
 from csbdeep.internals.train import RollingSequence
-from csbdeep.data import Resizer
-
-from ..sample_patches import get_valid_inds
-from ..utils import _is_power_of_2, optimize_threshold
+from csbdeep.utils import (_raise, axes_check_and_normalize, axes_dict,
+                           load_json, save_json)
 
 from .. import splinegenerator as sg
+from ..sample_patches import get_valid_inds
+from ..utils import _is_power_of_2, optimize_threshold
 
 
 def generic_masked_loss(
@@ -676,7 +671,8 @@ class SplineDistBase(BaseModel):
             Returns the label image and a dictionary with the details (coordinates, etc.) of the polygons/polyhedra.
 
         """
-        from ..big import _grid_divisible, BlockND, OBJECT_KEYS  # , repaint_labels
+        from ..big import (OBJECT_KEYS, BlockND,  # , repaint_labels
+                           _grid_divisible)
         from ..matching import relabel_sequential
 
         n = img.ndim

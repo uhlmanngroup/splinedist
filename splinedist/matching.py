@@ -1,10 +1,10 @@
-import numpy as np
-
-from numba import jit
-from tqdm import tqdm
-from scipy.optimize import linear_sum_assignment
 from collections import namedtuple
+
+import numpy as np
 from csbdeep.utils import _raise
+from numba import jit
+from scipy.optimize import linear_sum_assignment
+from tqdm import tqdm
 
 matching_criteria = dict()
 

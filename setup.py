@@ -1,9 +1,11 @@
 from __future__ import absolute_import, print_function
-from setuptools import setup, find_packages, Extension
-from setuptools.command.build_ext import build_ext
-from numpy.distutils.misc_util import get_numpy_include_dirs
-from os import path
+
 from glob import glob
+from os import path
+
+from numpy.distutils.misc_util import get_numpy_include_dirs
+from setuptools import Extension, find_packages, setup
+from setuptools.command.build_ext import build_ext
 
 
 class build_ext_openmp(build_ext):

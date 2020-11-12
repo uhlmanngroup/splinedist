@@ -1,37 +1,30 @@
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
+import math
+import warnings
+from distutils.version import LooseVersion
 
 import numpy as np
-import warnings
-import math
-from tqdm import tqdm
-
-from csbdeep.models import BaseConfig
 from csbdeep.internals.blocks import unet_block
-from csbdeep.utils import (
-    _raise,
-    backend_channels_last,
-    axes_check_and_normalize,
-    axes_dict,
-)
-from csbdeep.utils.tf import (
-    keras_import,
-    IS_TF_1,
-    CARETensorBoard,
-    CARETensorBoardImage,
-)
+from csbdeep.models import BaseConfig
+from csbdeep.utils import (_raise, axes_check_and_normalize, axes_dict,
+                           backend_channels_last)
+from csbdeep.utils.tf import (IS_TF_1, CARETensorBoard, CARETensorBoardImage,
+                              keras_import)
 from skimage.segmentation import clear_border
-from distutils.version import LooseVersion
+from tqdm import tqdm
 
 keras = keras_import()
 K = keras_import("backend")
 Input, Conv2D, MaxPooling2D = keras_import("layers", "Input", "Conv2D", "MaxPooling2D")
 Model = keras_import("models", "Model")
 
-from .base import SplineDistBase, SplineDistDataBase
-from ..sample_patches import sample_patches
-from ..utils import edt_prob, _normalize_grid
-from ..geometry import spline_dist, dist_to_coord, polygons_to_label
+from ..geometry import dist_to_coord, polygons_to_label, spline_dist
 from ..nms import non_maximum_suppression
+from ..sample_patches import sample_patches
+from ..utils import _normalize_grid, edt_prob
+from .base import SplineDistBase, SplineDistDataBase
 
 
 class SplineDistData2D(SplineDistDataBase):

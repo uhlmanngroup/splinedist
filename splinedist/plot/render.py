@@ -1,6 +1,9 @@
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
 import numpy as np
 from csbdeep.utils import normalize
+
 from ..matching import matching
 from .plot import random_label_cmap
 
@@ -72,8 +75,8 @@ def render_label(
     plt.subplot(1,2,2);plt.imshow(u2)
 
     """
-    from skimage.segmentation import find_boundaries
     from matplotlib import cm
+    from skimage.segmentation import find_boundaries
 
     alpha = np.clip(alpha, 0, 1)
 
@@ -144,8 +147,9 @@ def random_hls(n=2 ** 16, h0=0.33, l0=(0.8, 1), s0=(0.5, 0.8)):
 
 
 def cmap_from_hls(h, l, s):
-    import matplotlib
     import colorsys
+
+    import matplotlib
 
     h = h % 1
     l = np.clip(l, 0, 1)

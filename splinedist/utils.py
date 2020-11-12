@@ -1,21 +1,23 @@
-from __future__ import print_function, unicode_literals, absolute_import, division
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
+
+import datetime
+import os
+import warnings
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import numpy as np
-import warnings
-import os
-import datetime
-from tqdm import tqdm
-from zipfile import ZipFile, ZIP_DEFLATED
-from scipy.ndimage.morphology import distance_transform_edt, binary_fill_holes
-from scipy.ndimage.measurements import find_objects
-from scipy.optimize import minimize_scalar
-from skimage.measure import regionprops
+import cv2
 from csbdeep.utils import _raise
 from csbdeep.utils.six import Path
+from scipy.ndimage.measurements import find_objects
+from scipy.ndimage.morphology import binary_fill_holes, distance_transform_edt
+from scipy.optimize import minimize_scalar
+from skimage.measure import regionprops
+from tqdm import tqdm
 
-from .matching import matching_dataset
 from . import splinegenerator as sg
-import cv2
+from .matching import matching_dataset
 
 
 def gputools_available():

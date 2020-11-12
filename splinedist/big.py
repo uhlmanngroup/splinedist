@@ -1,14 +1,14 @@
-import numpy as np
-import warnings
 import math
-from tqdm import tqdm
-from skimage.measure import regionprops
-from skimage.draw import polygon
-from csbdeep.utils import _raise, axes_check_and_normalize, axes_dict
+import warnings
 from itertools import product
 
-from .geometry import polygons_to_label, polyhedron_to_label
+import numpy as np
+from csbdeep.utils import _raise, axes_check_and_normalize, axes_dict
+from skimage.draw import polygon
+from skimage.measure import regionprops
+from tqdm import tqdm
 
+from .geometry import polygons_to_label, polyhedron_to_label
 
 OBJECT_KEYS = set(("prob", "points", "coord", "dist"))
 COORD_KEYS = set(("points", "coord"))
