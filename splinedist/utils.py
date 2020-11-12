@@ -14,7 +14,7 @@ from csbdeep.utils import _raise
 from csbdeep.utils.six import Path
 
 from .matching import matching_dataset
-import splinegenerator as sg
+from . import splinegenerator as sg
 import cv2
 
 

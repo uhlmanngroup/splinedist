@@ -2,7 +2,6 @@ from __future__ import print_function, unicode_literals, absolute_import, divisi
 
 import numpy as np
 import sys
-import warnings
 import math
 from tqdm import tqdm
 from collections import namedtuple
@@ -22,7 +21,6 @@ ReduceLROnPlateau, TensorBoard = keras_import(
 
 from csbdeep.utils import (
     _raise,
-    backend_channels_last,
     axes_check_and_normalize,
     axes_dict,
     load_json,
@@ -35,7 +33,7 @@ from csbdeep.data import Resizer
 from ..sample_patches import get_valid_inds
 from ..utils import _is_power_of_2, optimize_threshold
 
-import splinegenerator as sg
+from .. import splinegenerator as sg
 
 
 def generic_masked_loss(

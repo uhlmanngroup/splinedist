@@ -1,18 +1,14 @@
 from __future__ import print_function, unicode_literals, absolute_import, division
 import numpy as np
-import warnings
 
 from skimage.measure import regionprops
 from skimage.draw import polygon
 from csbdeep.utils import _raise
 
-from ..utils import path_absolute, _is_power_of_2, _normalize_grid
+from ..utils import _normalize_grid
 from ..matching import _check_label_array
 
-import splinegenerator as sg
-from scipy.special import expit
-import math
-from skimage import measure
+from .. import splinegenerator as sg
 from scipy.interpolate import interp1d
 import cv2
 import tensorflow as tf

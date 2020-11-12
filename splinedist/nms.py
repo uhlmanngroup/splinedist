@@ -2,7 +2,7 @@ from __future__ import print_function, unicode_literals, absolute_import, divisi
 import numpy as np
 from time import time
 from .utils import _normalize_grid
-import splinegenerator as sg
+from . import splinegenerator as sg
 import tensorflow as tf
 
 
