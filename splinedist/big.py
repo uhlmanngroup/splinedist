@@ -1,12 +1,10 @@
 import math
-import warnings
 from itertools import product
 
 import numpy as np
-from csbdeep.utils import _raise, axes_check_and_normalize, axes_dict
+from csbdeep.utils import axes_check_and_normalize
 from skimage.draw import polygon
 from skimage.measure import regionprops
-from tqdm import tqdm
 
 from .geometry import polygons_to_label, polyhedron_to_label
 
