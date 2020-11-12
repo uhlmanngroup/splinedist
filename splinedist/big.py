@@ -6,7 +6,7 @@ from csbdeep.utils import axes_check_and_normalize
 from skimage.draw import polygon
 from skimage.measure import regionprops
 
-from .geometry import polygons_to_label, polyhedron_to_label
+from .geometry import polygons_to_label
 
 OBJECT_KEYS = set(("prob", "points", "coord", "dist"))
 COORD_KEYS = set(("points", "coord"))
@@ -466,173 +466,7 @@ class BlockND:
             BlockND(i, blocks, axes) for i, blocks in enumerate(product(*cover_1d))
         )
 
-
-class Polygon:
-    def __init__(self, coord, bbox=None, shape_max=None):
-        self.bbox = (
-            self.coords_bbox(coord, shape_max=shape_max) if bbox is None else bbox
-        )
-        self.coord = coord - np.array([r[0] for r in self.bbox]).reshape(2, 1)
-        self.slice = tuple(slice(*r) for r in self.bbox)
-        self.shape = tuple(r[1] - r[0] for r in self.bbox)
-        rr, cc = polygon(*self.coord, self.shape)
-        self.mask = np.zeros(self.shape, np.bool)
-        self.mask[rr, cc] = True
-
-    @staticmethod
-    def coords_bbox(*coords, shape_max=None):
-        assert all(
-            isinstance(c, np.ndarray) and c.ndim == 2 and c.shape[0] == 2
-            for c in coords
-        )
-        if shape_max is None:
-            shape_max = (np.inf, np.inf)
-        coord = np.concatenate(coords, axis=1)
-        mins = np.maximum(0, np.floor(np.min(coord, axis=1))).astype(int)
-        maxs = np.minimum(shape_max, np.ceil(np.max(coord, axis=1))).astype(int)
-        return tuple(zip(tuple(mins), tuple(maxs)))
-
-
-class Polyhedron:
-    def __init__(self, dist, origin, rays, bbox=None, shape_max=None):
-        self.bbox = (
-            self.coords_bbox((dist, origin), rays=rays, shape_max=shape_max)
-            if bbox is None
-            else bbox
-        )
-        self.slice = tuple(slice(*r) for r in self.bbox)
-        self.shape = tuple(r[1] - r[0] for r in self.bbox)
-        _origin = origin.reshape(1, 3) - np.array([r[0] for r in self.bbox]).reshape(
-            1, 3
-        )
-        self.mask = polyhedron_to_label(
-            dist[np.newaxis], _origin, rays, shape=self.shape, verbose=False
-        ).astype(np.bool)
-
-    @staticmethod
-    def coords_bbox(*dist_origin, rays, shape_max=None):
-        dists, points = zip(*dist_origin)
-        assert all(
-            isinstance(d, np.ndarray) and d.ndim == 1 and len(d) == len(rays)
-            for d in dists
-        )
-        assert all(
-            isinstance(p, np.ndarray) and p.ndim == 1 and len(p) == 3 for p in points
-        )
-        dists, points, verts = (
-            np.stack(dists)[..., np.newaxis],
-            np.stack(points)[:, np.newaxis],
-            rays.vertices[np.newaxis],
-        )
-        coord = dists * verts + points
-        coord = np.concatenate(coord, axis=0)
-        if shape_max is None:
-            shape_max = (np.inf, np.inf, np.inf)
-        mins = np.maximum(0, np.floor(np.min(coord, axis=0))).astype(int)
-        maxs = np.minimum(shape_max, np.ceil(np.max(coord, axis=0))).astype(int)
-        return tuple(zip(tuple(mins), tuple(maxs)))
-
-
-# def repaint_labels(output, labels, polys, show_progress=True):
-#     """Repaint object instances in correct order based on probability scores.
-
-#     Does modify 'output' and 'polys' in-place, but will only write sparsely to 'output' where needed.
-
-#     output: numpy.ndarray or similar
-#         Label image (integer-valued)
-#     labels: iterable of int
-#         List of integer label ids that occur in output
-#     polys: dict
-#         Dictionary of polygon/polyhedra properties.
-#         Assumption is that the label id (-1) corresponds to the index in the polys dict
-
-#     """
-#     assert output.ndim in (2,3)
-
-#     if show_progress:
-#         labels = tqdm(labels, leave=True)
-
-#     labels_eliminated = set()
-
-#     # TODO: inelegant to have so much duplicated code here
-#     if output.ndim == 2:
-#         coord = lambda i: polys['coord'][i-1]
-#         prob  = lambda i: polys['prob'][i-1]
-
-#         for i in labels:
-#             if i in labels_eliminated: continue
-#             poly_i = Polygon(coord(i), shape_max=output.shape)
-
-#             # find all labels that overlap with i (including i)
-#             overlapping = set(np.unique(output[poly_i.slice][poly_i.mask])) - {0}
-#             assert i in overlapping
-#             # compute bbox union to find area to crop/replace in large output label image
-#             bbox_union = Polygon.coords_bbox(*[coord(j) for j in overlapping], shape_max=output.shape)
-
-#             # crop out label i, including the region that include all overlapping labels
-#             poly_i = Polygon(coord(i), bbox=bbox_union)
-#             mask = poly_i.mask.copy()
-
-#             # remove pixels from mask that belong to labels with higher probability
-#             for j in [j for j in overlapping if prob(j) > prob(i)]:
-#                 mask[ Polygon(coord(j), bbox=bbox_union).mask ] = False
-
-#             crop = output[poly_i.slice]
-#             crop[crop==i] = 0 # delete all remnants of i in crop
-#             crop[mask]    = i # paint i where mask still active
-
-#             labels_remaining = set(np.unique(output[poly_i.slice][poly_i.mask])) - {0}
-#             labels_eliminated.update(overlapping - labels_remaining)
-#     else:
-
-#         dist = lambda i: polys['dist'][i-1]
-#         origin = lambda i: polys['points'][i-1]
-#         prob = lambda i: polys['prob'][i-1]
-#         rays = polys['rays']
-
-#         for i in labels:
-#             if i in labels_eliminated: continue
-#             poly_i = Polyhedron(dist(i), origin(i), rays, shape_max=output.shape)
-
-#             # find all labels that overlap with i (including i)
-#             overlapping = set(np.unique(output[poly_i.slice][poly_i.mask])) - {0}
-#             assert i in overlapping
-#             # compute bbox union to find area to crop/replace in large output label image
-#             bbox_union = Polyhedron.coords_bbox(*[(dist(j),origin(j)) for j in overlapping], rays=rays, shape_max=output.shape)
-
-#             # crop out label i, including the region that include all overlapping labels
-#             poly_i = Polyhedron(dist(i), origin(i), rays, bbox=bbox_union)
-#             mask = poly_i.mask.copy()
-
-#             # remove pixels from mask that belong to labels with higher probability
-#             for j in [j for j in overlapping if prob(j) > prob(i)]:
-#                 mask[ Polyhedron(dist(j), origin(j), rays, bbox=bbox_union).mask ] = False
-
-#             crop = output[poly_i.slice]
-#             crop[crop==i] = 0 # delete all remnants of i in crop
-#             crop[mask]    = i # paint i where mask still active
-
-#             labels_remaining = set(np.unique(output[poly_i.slice][poly_i.mask])) - {0}
-#             labels_eliminated.update(overlapping - labels_remaining)
-
-#     if len(labels_eliminated) > 0:
-#         ind = [i-1 for i in labels_eliminated]
-#         for k,v in polys.items():
-#             if k in OBJECT_KEYS:
-#                 polys[k] = np.delete(v, ind, axis=0)
-
-
 ############
-
-
-def predict_big(model, *args, **kwargs):
-    from .models import SplineDist2D, SplineDist3D
-
-    if isinstance(model, (SplineDist2D, SplineDist3D)):
-        dst = model.__class__.__name__
-    else:
-        dst = "{SplineDist2D, SplineDist3D}"
-    raise RuntimeError(f"This function has moved to {dst}.predict_instances_big.")
 
 
 class NotFullyVisible(Exception):
@@ -651,16 +485,3 @@ def _grid_divisible(grid, size, name=None, verbose=True):
         )
     assert size % grid == 0
     return size
-
-
-def render_polygons(polys, shape):
-    # TODO: this function doesn't belong here
-    # -> should really refactor polygons_to_label...
-    assert isinstance(polys, dict) and all(
-        k in polys for k in ("prob", "coord", "points")
-    )
-    ind = np.arange(len(polys["prob"]), dtype=np.int)
-    coord = np.expand_dims(polys["coord"], 1)
-    prob = np.expand_dims(polys["prob"], 1)
-    points = np.stack([ind, np.zeros_like(ind)], axis=-1)
-    return polygons_to_label(coord, prob, points, shape=shape)
