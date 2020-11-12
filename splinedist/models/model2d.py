@@ -1,8 +1,6 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import math
-import warnings
 from distutils.version import LooseVersion
 
 import numpy as np
@@ -13,7 +11,6 @@ from csbdeep.utils import (_raise, axes_check_and_normalize, axes_dict,
 from csbdeep.utils.tf import (IS_TF_1, CARETensorBoard, CARETensorBoardImage,
                               keras_import)
 from skimage.segmentation import clear_border
-from tqdm import tqdm
 
 keras = keras_import()
 K = keras_import("backend")
