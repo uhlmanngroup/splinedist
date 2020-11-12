@@ -96,6 +96,8 @@ setup(
         "csbdeep>=0.6.0",
         "scikit-image",
         "numba",
+        "h5py<2.11.0,>=2.10.0",
+        "numpy<1.19.0,>=1.16.0",
         "tensorflow",
     ],
 )
