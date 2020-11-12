@@ -219,7 +219,7 @@ def non_maximum_suppression_3d_inds(
 
     returns indices of selected polygons
     """
-    from .lib.stardist3d import c_non_max_suppression_inds
+    from stardist.lib.stardist3d import c_non_max_suppression_inds
 
     assert dist.ndim == 2
     assert points.ndim == 2
