@@ -383,7 +383,7 @@ def wrapIndex(t, k, M, half_support):
     return wrappedT
 
 
-def phi_generator(M, contoursize_max):
+def phi_generator(M, contoursize_max = 400):
     ts = np.linspace(0, float(M), num=contoursize_max, endpoint=False)
     wrapped_indices = np.array([[wrapIndex(t, k, M, 2) for k in range(M)] for t in ts])
     vfunc = np.vectorize(sg.B3().value)
