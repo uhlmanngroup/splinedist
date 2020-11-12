@@ -788,12 +788,6 @@ class SplineDistBase(BaseModel):
             for k, v in polys_all.items()
         }
 
-        # if labels_out is not None and len(problem_ids) > 0:
-        #     # if show_progress:
-        #     #     blocks.write('')
-        #     # print(f"Found {len(problem_ids)} objects that violate the 'min_overlap' assumption.", file=sys.stderr, flush=True)
-        #     repaint_labels(labels_out, problem_ids, polys_all, show_progress=False)
-
         return labels_out, polys_all  # , tuple(problem_ids)
 
     def optimize_thresholds(
