@@ -42,7 +42,7 @@ class build_ext_openmp(build_ext):
 # cf. https://github.com/mkleehammer/pyodbc/issues/82#issuecomment-231561240
 _dir = path.dirname(__file__)
 
-with open(path.join(_dir, "stardist", "version.py"), encoding="utf-8") as f:
+with open(path.join(_dir, "splinedist", "version.py"), encoding="utf-8") as f:
     exec(f.read())
 
 with open(path.join(_dir, "README.md"), encoding="utf-8") as f:
@@ -53,14 +53,14 @@ qhull_src = sorted(glob(path.join(qhull_root, "*", "*.c*")))[::-1]
 common_src = ["stardist/lib/utils.cpp"]
 
 setup(
-    name="stardist",
+    name="splinedist",
     version=__version__,
-    description="StarDist",
+    description="SplineDist",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/mpicbg-csbd/stardist",
-    author="Uwe Schmidt, Martin Weigert",
-    author_email="uschmidt@mpi-cbg.de, martin.weigert@epfl.ch",
+    url="https://gitlab.ebi.ac.uk/smandal/splinedist",
+    author="Soham Mandal, Virginie Uhlmann",
+    author_email="smandal@ebi.ac.uk, uhlmann@ebi.ac.uk",
     license="BSD 3-Clause License",
     packages=find_packages(),
     python_requires=">=3.6",
