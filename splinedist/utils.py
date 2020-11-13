@@ -407,6 +407,7 @@ def grid_generator(M, patch_size, grid_subsampled):
 
     grid = grid[:, 0 :: grid_subsampled[0], 0 :: grid_subsampled[1]]
     grid = grid.astype(np.float32)
+    np.save("grid_" + str(M) + ".npy", grid)
     return
 
 
