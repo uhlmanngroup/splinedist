@@ -3,6 +3,8 @@ channels:
   - conda-forge
 dependencies:
   - python==3.8
+  - tensorflow==2.2.0
+  - cudatoolkit==10.1.243
   - pip
   - pip:
       # Install SplineDist from source

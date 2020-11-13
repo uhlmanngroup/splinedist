@@ -100,7 +100,6 @@ setup(
         "numba",
         "h5py<2.11.0,>=2.10.0",
         "numpy<1.19.0,>=1.16.0",
-        "tensorflow",
         "opencv-python",
     ],
 )
