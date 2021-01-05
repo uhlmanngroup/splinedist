@@ -353,3 +353,73 @@ def get_contoursize_max(Y_trn):
             
     contoursize_max = np.amax(contoursize)            
     return contoursize_max
+
+
+# TODO: clean
+# not for evaluating performance in non-star-convex objects
+def iou(labelmap_gt, labelmap_pred):
+    iou_list = []
+    for i in range(len(labelmap_gt)):   
+        mask_gt = labelmap_gt[i]
+        mask_gt[mask_gt>0] = 1
+        
+        mask_pred = labelmap_pred[i]
+        mask_pred[mask_pred>0] = 1
+        
+        intersection = np.logical_and(mask_gt, mask_pred)
+        union = np.logical_or(mask_gt, mask_pred)
+        iou = np.sum(intersection) / np.sum(union)
+        
+        iou_list.append(iou)        
+    return iou_list
+        
+
+# TODO: clean
+# use for evaluating performance in non-star-convex objects
+def iou_objectwise(labelmap_gt, labelmap_pred):
+    iou_list = []
+    for i in range(len(labelmap_gt)):
+        iou_img = []
+        mask_gt = labelmap_gt[i]
+        
+        mask_pred = labelmap_pred[i]
+        mask_matched = np.zeros(mask_pred.shape) 
+        
+        obj_list_gt = np.unique(mask_gt)
+        obj_list_gt = obj_list_gt[1:]
+        
+        obj_list_pred = np.unique(mask_pred)
+        obj_list_pred = obj_list_pred[1:]        
+
+        mask_gt_tmp = mask_gt.copy()
+        
+        for j in range(len(obj_list_pred)):
+            mask_pred_obj = mask_pred.copy()
+            mask_pred_obj[mask_pred_obj != obj_list_pred[j]] = 0
+            mask_pred_obj[mask_pred_obj>0] = 1            
+            
+            mask_gt_all = mask_gt_tmp.copy()
+            mask_gt_all[mask_gt_all>0] = 1
+            
+            intersection = np.logical_and(mask_gt_all, mask_pred_obj)  
+            
+            idx_nonzero = np.argwhere(intersection)               
+            if(len(idx_nonzero) != 0):            
+                idx_nonzero = idx_nonzero[0]
+                label = mask_gt_tmp[idx_nonzero[0],idx_nonzero[1]]
+                mask_gt_obj = mask_gt_tmp.copy()
+                mask_gt_tmp[mask_gt_tmp==label] = 0                
+                
+                mask_gt_obj[mask_gt_obj != label] = 0
+                mask_gt_obj[mask_gt_obj>0] = 1
+                
+                intersection_obj = np.logical_and(mask_gt_obj, mask_pred_obj)
+                union_obj = np.logical_or(mask_gt_obj, mask_pred_obj)
+                iou = np.sum(intersection_obj) / np.sum(union_obj)        
+                iou_img.append(iou)
+            else:
+                iou_img.append(0)        
+        iou_img = np.asarray(iou_img)
+        iou_img_mean = np.mean(iou_img)
+        iou_list.append(iou_img_mean)
+    return iou_list
