@@ -21,11 +21,10 @@ Our repository relies on the [StarDist](https://github.com/mpicbg-csbd/stardist)
 You can install StarDist as follows:
 
 ```bash
-$ git clone https://gitlab.ebi.ac.uk/smandal/splinedist
-$ cd splinedist
-$ pip install .
+git clone https://gitlab.ebi.ac.uk/smandal/splinedist
+cd splinedist
+pip install .
 ```
-
 
 ## Walkthrough
 
@@ -52,3 +51,7 @@ You can cite our [manuscript](https://www.biorxiv.org/content/10.1101/2020.10.27
     journal = {bioRxiv}
 }
 ```
+
+## Datasets
+
+The synthetic dataset used in the SplineDist manuscript can be found [here](https://osf.io/z89pq/).This dataset contains synthetic images with mostly star-convex and some non-star convex cell-like objects. 
