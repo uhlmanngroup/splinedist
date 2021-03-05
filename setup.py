@@ -56,11 +56,11 @@ common_src = ["stardist/lib/utils.cpp"]
 
 setup(
     name="splinedist",
-    version=__version__,
+    version="0.0.1",
     description="SplineDist",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://gitlab.ebi.ac.uk/smandal/splinedist",
+    url="https://github.com/uhlmanngroup/splinedist",
     author="Soham Mandal, Virginie Uhlmann",
     author_email="smandal@ebi.ac.uk, uhlmann@ebi.ac.uk",
     license="BSD 3-Clause License",
