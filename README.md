@@ -14,7 +14,7 @@ While StarDist models objects with star-convex polygonal representation, SplineD
 
 1. Tensorflow
 
-2. [StarDist](https://github.com/mpicbg-csbd/stardist) (can be installed with `pip` : `pip install stardist`)
+2. [StarDist 0.6.2](https://github.com/mpicbg-csbd/stardist) (can be installed with `pip` : `pip install stardist==0.6.2`)
 
 
 ## Walkthrough
