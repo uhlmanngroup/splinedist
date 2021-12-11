@@ -1,0 +1,22 @@
+name: base
+channels:
+  - anaconda
+  - pytorch
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - conda
+  - python
+  - tensorflow
+  - tifffile
+  - nb_conda_kernels
+  - numpy
+  - tqdm
+  - scikit-learn
+  - ipython
+  - matplotlib
+  - scipy
+  - pip
+  - pip:
+      - stardist==0.6.2
