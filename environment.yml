@@ -1,4 +1,4 @@
-name: base
+name: splinedist
 channels:
   - anaconda
   - pytorch
@@ -14,9 +14,11 @@ dependencies:
   - numpy
   - tqdm
   - scikit-learn
+  - opencv
   - ipython
   - matplotlib
   - scipy
   - pip
   - pip:
-      - stardist==0.6.2
+      - stardist
+      - "./"
