@@ -10,7 +10,8 @@ dependencies:
   - conda
   - python
   - cudatoolkit
-  - mamba
+  - pip
+  # - mamba
   - pytest
   - tensorflow
   - tensorflow-gpu
@@ -29,17 +30,16 @@ dependencies:
   - libopencv
   - py-opencv
   - ipython
-  - jupyter
+  # - jupyter
   - nbconvert
   - matplotlib
   - scipy
-  - pip
   - cudnn
-  - cxx-compilern
-  - gcc_linux-64
-  - nvcc_linux-64
-  - nccl
-  - nvidia-ml
+  # - cxx-compilern
+  # - gcc_linux-64
+  # - nvcc_linux-64
+  # - nccl
+  # - nvidia-ml
   - pip:
       - stardist
       - "./"
