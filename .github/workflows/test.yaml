@@ -6,7 +6,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
-      # - run: echo SHA=foobar--$(date +%s) >> $GITHUB_ENV
-      - run: python3 -m pip install jupyter-repo2docker
-      - run: repo2docker --no-run --image-name spline_contour:latest --user-id=1001 --user-name=1001 .
-      - run: docker run spline_contour:latest pytest --nbmake data.ipynb training.ipynb prediction.ipynb 
+      # - run: python3 -m pip install jupyter-repo2docker
+      # - run: repo2docker --no-run --image-name spline_contour:latest --user-id=1001 --user-name=1001 .
+      # - run: docker run spline_contour:latest pytest --nbmake data.ipynb training.ipynb prediction.ipynb 
