@@ -32,7 +32,7 @@ def non_maximum_suppression(coord, prob, grid=(1,1), b=2, nms_thresh=0.5, prob_t
     coord = np.transpose(coord,(0,1,3,2))  
     M = np.shape(coord)[2]   
     
-    phi = np.load('./phi_' + str(M) + '.npy')
+    phi = np.load('models/phi/phi_' + str(M) + '.npy')
     phi = tf.convert_to_tensor(phi)
     SplineContour = sg.SplineCurveVectorized(M,sg.B3(),True,coord)
     coord = (SplineContour.sampleSequential(phi))

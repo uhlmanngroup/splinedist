@@ -38,12 +38,12 @@ def generic_masked_loss(mask, n_params, loss, weights=1, norm_by_mask=True, reg_
         y_pred = tf.stack((x,y), axis = -1)
         
         M = n_params//2
-        grid = np.load('./grid_' + str(M) + '.npy')
+        grid = np.load('models/grid/grid_' + str(M) + '.npy')
         grid = tf.convert_to_tensor(grid)
         grid = tf.repeat(grid, tf.shape(y_pred)[0], axis = 0)
         c_pred = grid + y_pred
         
-        phi = np.load('./phi_' + str(M) + '.npy')
+        phi = np.load('models/phi/phi_' + str(M) + '.npy')
         phi = tf.convert_to_tensor(phi)
         SplineContour = sg.SplineCurveVectorized(M,sg.B3(),True,c_pred)
         y_pred = (SplineContour.sampleSequential(phi))            

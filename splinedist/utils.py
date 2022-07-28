@@ -308,7 +308,11 @@ def phi_generator(M, contoursize_max):
     vfunc = np.vectorize(sg.B3().value)
     phi = vfunc(wrapped_indices)     
     phi = phi.astype(np.float32)
-    np.save('phi_' + str(M) + '.npy',phi)
+    
+    if not os.path.isdir('models/phi'):
+        os.mkdir('models/phi')
+    
+    np.save('models/phi/phi_' + str(M) + '.npy',phi)
     return
     
     
@@ -326,7 +330,11 @@ def grid_generator(M, patch_size, grid_subsampled):
 
     grid = grid[:,0::grid_subsampled[0],0::grid_subsampled[1]]
     grid = grid.astype(np.float32)
-    np.save('grid_' + str(M) + '.npy', grid)
+    
+    if not os.path.isdir('models/grid'):
+        os.mkdir('models/grid')
+        
+    np.save('models/grid/grid_' + str(M) + '.npy', grid)
     return
 
 

@@ -73,7 +73,7 @@ def polygons_to_label(coord, prob, points, shape=None, thr=-np.inf):
     points = points[ind]
     
     M = coord.shape[3]
-    phi = np.load('./phi_' + str(M) + '.npy')
+    phi = np.load('models/phi/phi_' + str(M) + '.npy')
     phi = tf.convert_to_tensor(phi)
 
     i = 1
