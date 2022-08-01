@@ -27,7 +27,7 @@ from ..utils import _is_power_of_2, optimize_threshold
 
 import splinegenerator as sg
 
-def generic_masked_loss(mask, n_params, loss, weights=1, norm_by_mask=True, reg_weight=0, reg_penalty=K.abs):
+def generic_masked_loss(mask, n_params, model_path, loss, weights=1, norm_by_mask=True, reg_weight=0, reg_penalty=K.abs):
     def _loss(y_true, y_pred):  
         y_pred = tf.reshape(y_pred,(tf.shape(y_pred)[0],tf.shape(y_pred)[1],tf.shape(y_pred)[2],-1,2))  
         y_pred_r = y_pred[:,:,:,:,0]
@@ -38,12 +38,12 @@ def generic_masked_loss(mask, n_params, loss, weights=1, norm_by_mask=True, reg_
         y_pred = tf.stack((x,y), axis = -1)
         
         M = n_params//2
-        grid = np.load('models/grid/grid_' + str(M) + '.npy')
+        grid = np.load(model_path + '/grid_' + str(M) + '.npy')
         grid = tf.convert_to_tensor(grid)
         grid = tf.repeat(grid, tf.shape(y_pred)[0], axis = 0)
         c_pred = grid + y_pred
         
-        phi = np.load('models/phi/phi_' + str(M) + '.npy')
+        phi = np.load(model_path + '/phi_' + str(M) + '.npy')
         phi = tf.convert_to_tensor(phi)
         SplineContour = sg.SplineCurveVectorized(M,sg.B3(),True,c_pred)
         y_pred = (SplineContour.sampleSequential(phi))            
@@ -59,28 +59,28 @@ def generic_masked_loss(mask, n_params, loss, weights=1, norm_by_mask=True, reg_
         print(actual_loss / norm_mask)
     return _loss  
 
-def masked_loss(mask, n_params, penalty, reg_weight, norm_by_mask):
+def masked_loss(mask, n_params, model_path, penalty, reg_weight, norm_by_mask):
     loss = lambda y_true, y_pred: penalty(y_true - y_pred)
-    return generic_masked_loss(mask, n_params, loss, reg_weight=reg_weight, norm_by_mask=norm_by_mask)
+    return generic_masked_loss(mask, n_params, model_path, loss, reg_weight=reg_weight, norm_by_mask=norm_by_mask)
 
 # TODO: should we use norm_by_mask=True in the loss or only in a metric?
 #       previous 2D behavior was norm_by_mask=False
 #       same question for reg_weight? use 1e-4 (as in 3D) or 0 (as in 2D)?
 
-def masked_loss_mae(mask, n_params, reg_weight=0, norm_by_mask=True):
-    return masked_loss(mask, n_params, K.abs, reg_weight=reg_weight, norm_by_mask=norm_by_mask)
+def masked_loss_mae(mask, n_params, model_path, reg_weight=0, norm_by_mask=True):
+    return masked_loss(mask, n_params, model_path, K.abs, reg_weight=reg_weight, norm_by_mask=norm_by_mask)
 
-def masked_loss_mse(mask, n_params, reg_weight=0, norm_by_mask=True):
-    return masked_loss(mask, n_params, K.square, reg_weight=reg_weight, norm_by_mask=norm_by_mask)
+def masked_loss_mse(mask, n_params, model_path, reg_weight=0, norm_by_mask=True):
+    return masked_loss(mask, n_params, model_path, K.square, reg_weight=reg_weight, norm_by_mask=norm_by_mask)
 
-def masked_metric_mae(mask, n_params):
+def masked_metric_mae(mask, n_params, model_path):
     def relevant_mae(y_true, y_pred):
-        return masked_loss(mask, n_params, K.abs, reg_weight=0, norm_by_mask=True)(y_true, y_pred)
+        return masked_loss(mask, n_params, model_path, K.abs, reg_weight=0, norm_by_mask=True)(y_true, y_pred)
     return relevant_mae
 
-def masked_metric_mse(mask, n_params):
+def masked_metric_mse(mask, n_params, model_path):
     def relevant_mse(y_true, y_pred):
-        return masked_loss(mask, n_params, K.square, reg_weight=0, norm_by_mask=True)(y_true, y_pred)
+        return masked_loss(mask, n_params, model_path, K.square, reg_weight=0, norm_by_mask=True)(y_true, y_pred)
     return relevant_mse
 
 def kld(y_true, y_pred):
@@ -240,16 +240,16 @@ class SplineDistBase(BaseModel):
         #REFACTORED
         def dist_loss(dist_true_mask, dist_pred):
             dist_true, dist_mask = split_dist_true_mask(dist_true_mask)          
-            return masked_dist_loss(dist_mask, n_params = self.config.n_params, 
-                                    reg_weight=self.config.train_background_reg)(dist_true, dist_pred)       
+            return masked_dist_loss(dist_mask, n_params = self.config.n_params,  
+                                    model_path = str(self.basedir) + '/' + str(self.name), reg_weight=self.config.train_background_reg)(dist_true, dist_pred)       
 
         def relevant_mae(dist_true_mask, dist_pred):
             dist_true, dist_mask = split_dist_true_mask(dist_true_mask)
-            return masked_metric_mae(dist_mask, n_params = self.config.n_params)(dist_true, dist_pred)
+            return masked_metric_mae(dist_mask, n_params = self.config.n_params, model_path = str(self.basedir) + '/' + str(self.name))(dist_true, dist_pred)
 
         def relevant_mse(dist_true_mask, dist_pred):
             dist_true, dist_mask = split_dist_true_mask(dist_true_mask)
-            return masked_metric_mse(dist_mask, n_params = self.config.n_params)(dist_true, dist_pred)
+            return masked_metric_mse(dist_mask, n_params = self.config.n_params, model_path = str(self.basedir) + '/' + str(self.name))(dist_true, dist_pred)
 
         self.keras_model.compile(optimizer, loss=[prob_loss, dist_loss],
                                             loss_weights = list(self.config.train_loss_weights),

@@ -395,9 +395,9 @@ class SplineDist2D(SplineDistBase):
         if overlap_label is not None: raise NotImplementedError("overlap_label not supported for 2D yet!")
 
         coord = dist_to_coord(dist, grid=self.config.grid)
-        inds = non_maximum_suppression(coord, prob, grid=self.config.grid,
+        inds = non_maximum_suppression(coord, prob, model_path=str(self.basedir) + '/' + str(self.name), grid=self.config.grid,
                                        prob_thresh=prob_thresh, nms_thresh=nms_thresh, **nms_kwargs)
-        labels = polygons_to_label(coord, prob, inds, shape=img_shape)
+        labels = polygons_to_label(coord, prob, inds, model_path=str(self.basedir) + '/' + str(self.name), shape=img_shape)
         # sort 'inds' such that ids in 'labels' map to entries in polygon dictionary entries
         inds = inds[np.argsort(prob[inds[:,0],inds[:,1]])]
         # adjust for grid

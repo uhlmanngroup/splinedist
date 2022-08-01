@@ -64,7 +64,7 @@ def dist_to_coord(rhos, grid=(1,1)):
     coord[...,1,:] += rhos * np.sin(phis) # col coordinate  
     return coord[0] if is_single_image else coord
 
-def polygons_to_label(coord, prob, points, shape=None, thr=-np.inf):
+def polygons_to_label(coord, prob, points, model_path, shape=None, thr=-np.inf):
     sh = coord.shape[:2] if shape is None else shape
     lbl = np.zeros(sh,np.int32)
     # sort points with increasing probability
@@ -73,7 +73,7 @@ def polygons_to_label(coord, prob, points, shape=None, thr=-np.inf):
     points = points[ind]
     
     M = coord.shape[3]
-    phi = np.load('models/phi/phi_' + str(M) + '.npy')
+    phi = np.load(model_path + '/phi_' + str(M) + '.npy')
     phi = tf.convert_to_tensor(phi)
 
     i = 1

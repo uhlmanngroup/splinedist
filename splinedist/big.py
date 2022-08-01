@@ -579,4 +579,4 @@ def render_polygons(polys, shape):
     coord  = np.expand_dims(polys['coord'], 1)
     prob   = np.expand_dims(polys['prob'], 1)
     points = np.stack([ind,np.zeros_like(ind)],axis=-1)
-    return polygons_to_label(coord, prob, points, shape=shape)
+    return polygons_to_label(coord, prob, points, model_path, shape=shape)
