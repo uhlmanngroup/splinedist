@@ -1,0 +1,45 @@
+name: splinedist_contour
+channels:
+  - anaconda
+  - pytorch
+  - conda-forge
+  - bioconda
+  - defaults
+  - nvidia
+dependencies:
+  - conda
+  - python
+  - cudatoolkit
+  - pip
+  # - mamba
+  - pytest
+  - tensorflow
+  - tensorflow-gpu
+  - tifffile
+  - nbmake
+  # - nb_conda_kernels
+  - ipykernel
+  - ipywidgets
+  - ipython
+  - numpy
+  - tqdm
+  - scikit-learn
+  - opencv=4.5.0
+  - mesa-libgl-devel-cos7-x86_64
+  - mesa-libgl-cos6-x86_64
+  - libopencv
+  - py-opencv
+  - ipython
+  # - jupyter
+  - nbconvert
+  - matplotlib
+  - scipy
+  - cudnn
+  # - cxx-compilern
+  # - gcc_linux-64
+  # - nvcc_linux-64
+  # - nccl
+  # - nvidia-ml
+  - pip:
+      - stardist
+      - "./"

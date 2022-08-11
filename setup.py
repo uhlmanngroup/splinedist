@@ -52,7 +52,7 @@ qhull_src = sorted(glob(path.join(qhull_root, '*', '*.c*')))[::-1]
 common_src = ['stardist/lib/utils.cpp']
 
 setup(
-    name='stardist',
+    name='splinedist',
     version=__version__,
     description='StarDist',
     long_description=long_description,
