@@ -27,6 +27,6 @@ setup(
     name="splinedist",
     packages=find_packages(),
     url="https://github.com/uhlmanngroup/splinedist",
-    version="0.1.1",
+    version="0.1.2",
     zip_safe=False,
 )
