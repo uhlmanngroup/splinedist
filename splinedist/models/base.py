@@ -35,7 +35,7 @@ from csbdeep.data import Resizer
 from ..sample_patches import get_valid_inds
 from ..utils import _is_power_of_2, optimize_threshold
 
-import splinegenerator as sg
+from .. import splinegenerator as sg
 
 
 def generic_masked_loss(
