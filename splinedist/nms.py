@@ -24,8 +24,11 @@ def non_maximum_suppression(
 
     b: don't use pixel closer than b pixels to the image boundary
     """
-    from stardist.lib.stardist2d import c_non_max_suppression_inds
-
+    
+    try:
+        from stardist.lib.stardist2d import c_non_max_suppression_inds_old as c_non_max_suppression_inds
+    except ImportError:
+        from stardist.lib.stardist2d import c_non_max_suppression_inds
     # TODO: using b>0 with grid>1 can suppress small/cropped objects at the image boundary
 
     assert prob.ndim == 2
@@ -217,7 +220,11 @@ def non_maximum_suppression_3d_inds(
 
     returns indices of selected polygons
     """
-    from .lib.stardist3d import c_non_max_suppression_inds
+    try:
+        from stardist.lib.stardist3d import c_non_max_suppression_inds_old as  c_non_max_suppression_inds
+    except ImportError:
+        from stardist.lib.stardist3d import c_non_max_suppression_inds
+
 
     assert dist.ndim == 2
     assert points.ndim == 2

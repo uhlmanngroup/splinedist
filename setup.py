@@ -6,7 +6,7 @@ from setuptools import find_packages, setup
 with open("README.md") as readme_file:
     readme = readme_file.read()
 
-requirements = ["stardist==0.6.2", "tensorflow"]
+requirements = ["stardist>=0.6.2", "tensorflow"]
 
 setup(
     author="uhlmanngroup",
@@ -27,6 +27,6 @@ setup(
     name="splinedist",
     packages=find_packages(),
     url="https://github.com/uhlmanngroup/splinedist",
-    version="0.1.0",
+    version="0.1.1",
     zip_safe=False,
 )
