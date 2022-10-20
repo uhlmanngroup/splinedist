@@ -25,3 +25,8 @@ Three walkthrough notebooks have been included in this repository for data-explo
 ## Datasets
 
 The synthetic dataset used in the SplineDist manuscript can be found [here](https://osf.io/z89pq/).This dataset contains synthetic images with mostly star-convex and some non-star convex cell-like objects. 
+
+
+## Pretrained Models
+
+Some pretrained SplineDist models are available [here](https://zenodo.org/record/7193306#.Y1EZI9LMJyo). These models are trained on open-source datasets of fluorescence microscopy images and Haematoxylin & Eosin stained histology images. 
