@@ -3,6 +3,7 @@
 
 This repository contains the implementation of SplineDist, a machine learning framework for automated cell segmentation with spline curves.  The [manuscript](https://www.biorxiv.org/content/10.1101/2020.10.27.357640v1) is accepted at [ISBI 2021](https://biomedicalimaging.org/2021/). The code in its current state allows reproducing the paper experiments but is still in development. We are currently working to package it in a cleaned and optimized form. In the meantime, we encourage interested end-users to contact us for more information and assistance.
 
+If you prefer to try out SplineDist from a user interface, we also have a [napari plugin](https://github.com/uhlmanngroup/napari-splinedist).
 
 ## Overview
 SplineDist has been designed for performing instance segmentation in bioimages. Our method has been built by extending the popular [StarDist](https://arxiv.org/abs/1806.03535) framework. Our repository relies on the high-quality [StarDist](https://github.com/mpicbg-csbd/stardist) repository.  We encourage the user to explore StarDist repository for further details on the StarDist method.
