@@ -6,7 +6,7 @@ from setuptools import find_packages, setup
 with open("README.md") as readme_file:
     readme = readme_file.read()
 
-requirements = ["stardist>=0.8.3", "tensorflow", "opencv-python-headless","csbdeep>=0.6.3"]
+requirements = ["stardist==0.8.3", "tensorflow==2.10.0", "opencv-python-headless","csbdeep==0.6.3","numpy==1.21.2","numba==0.51.2"]
 
 setup(
     author="uhlmanngroup",
