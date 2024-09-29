@@ -11,11 +11,35 @@ SplineDist has been designed for performing instance segmentation in bioimages. 
 While StarDist models objects with star-convex polygonal representation, SplineDist models objects as parametric spline curves. As our representation is more general, it allows to model non-star-convex objects as well, with the possibility of conducting further statistical shape analysis.
 
 
-## Requirements 
+## Installation Instructions
 
-1. Tensorflow
+To install and set up SplineDist, follow these steps:
 
-2. [StarDist 0.6.2](https://github.com/mpicbg-csbd/stardist) (can be installed with `pip` : `pip install stardist==0.6.2`)
+1. Clone the repository and navigate to the SplineDist directory:
+
+   ```bash
+   git clone git@github.com:uhlmanngroup/splinedist.git
+   cd SplineDist
+   ```
+
+2. Create and activate a new environment:
+
+   ```bash
+   mamba create -n splinedist python=3.8
+   mamba activate splinedist 
+   ```
+
+3. Install Anaconda packages:
+
+   ```bash
+   mamba install anaconda
+   ```
+
+4. Install SplineDist:
+
+   ```bash
+   python3 -m pip install .
+   ```
 
 
 ## Walkthrough
